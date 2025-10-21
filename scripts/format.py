@@ -3,7 +3,20 @@
 format.py — auto-format all C/C++ files using clang-format
 
 Usage:
-    python3 format.py
+    python format.py
+
+If clang-format is not found:
+    On Windows:
+        1. Go to https://github.com/llvm/llvm-project/releases
+        2. Download and install the latest LLVM-x.y.z-win64.exe
+        3. During installation, CHECK “Add LLVM to the system PATH”
+        4. Reopen PowerShell and verify with: clang-format --version
+
+    On macOS (Homebrew):
+        brew install clang-format
+
+    On Linux (Ubuntu/Debian):
+        sudo apt install clang-format
 """
 
 import subprocess
@@ -35,9 +48,7 @@ def main():
         subprocess.run(["clang-format", "-i"] + files, check=True)
         print("✅ All files formatted successfully.")
     except FileNotFoundError:
-        print(
-            "❌ clang-format not found. Please install it first (e.g. `sudo apt install clang-format`)."
-        )
+        print("❌ clang-format not found. See installation instructions above.")
         sys.exit(1)
     except subprocess.CalledProcessError:
         print("❌ clang-format failed on some files.")

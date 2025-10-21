@@ -14,7 +14,7 @@ jobs:
           [ -z "$files" ] && exit 0
           clang-format --dry-run --Werror $files || (
             echo "❌ Formatting check failed."
-            echo "💡 Run 'python3 format.py' locally to fix formatting."
+            echo "💡 Run 'python3 .\scripts\format.py' locally to fix formatting."
             exit 1
           )
 
@@ -35,6 +35,6 @@ jobs:
             --quiet \
             --extra-arg="${EXTRA}" || (
               echo "❌ Lint check failed."
-              echo "💡 Run 'python3 tidy.py' locally to review and fix issues."
+              echo "💡 Run 'python3 .\scripts\tidy.py' locally to review and fix issues."
               exit 1
             )
