@@ -7,18 +7,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y clang-format
+      - run: sudo apt-get update && sudo apt-get install -y clang-format python3
       - name: Check formatting
         run: |
           files="$(git ls-files '*.c' '*.h' '*.cpp' '*.hpp')"
           [ -z "$files" ] && exit 0
-          clang-format --dry-run --Werror $files
+          clang-format --dry-run --Werror $files || (
+            echo "❌ Formatting check failed."
+            echo "💡 Run 'python3 format.py' locally to fix formatting."
+            exit 1
+          )
 
   clang_tidy_naming:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y clang-tidy
+      - run: sudo apt-get update && sudo apt-get install -y clang-tidy python3
       - name: Check snake_case naming
         env:
           EXTRA: "-std=c11 -Iinclude -Isrc"
@@ -29,4 +33,8 @@ jobs:
             --config-file=.clang-tidy \
             --warnings-as-errors='*' \
             --quiet \
-            --extra-arg="${EXTRA}"
+            --extra-arg="${EXTRA}" || (
+              echo "❌ Lint check failed."
+              echo "💡 Run 'python3 tidy.py' locally to review and fix issues."
+              exit 1
+            )

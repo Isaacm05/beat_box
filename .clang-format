@@ -8,3 +8,4 @@ BreakBeforeBraces: Attach # K&R-like
 PointerAlignment: Left
 SortIncludes: true
 SpaceAfterCStyleCast: true
+
