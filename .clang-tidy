@@ -1,0 +1,27 @@
+Checks: >
+  -*,
+  readability-identifier-naming
+
+WarningsAsErrors: "*"
+
+CheckOptions:
+  # functions, vars, params → snake_case
+  - { key: readability-identifier-naming.FunctionCase, value: lower_case }
+  - {
+      key: readability-identifier-naming.FunctionIgnoredRegexp,
+      value: "^(main)$",
+    }
+  - { key: readability-identifier-naming.VariableCase, value: lower_case }
+  - { key: readability-identifier-naming.GlobalVariableCase, value: lower_case }
+  - { key: readability-identifier-naming.ParameterCase, value: lower_case }
+  - { key: readability-identifier-naming.MemberCase, value: lower_case }
+  - { key: readability-identifier-naming.PrivateMemberSuffix, value: _ }
+  # types (struct/enum/typedef) → snake_case too
+  - { key: readability-identifier-naming.TypeCase, value: lower_case }
+  - { key: readability-identifier-naming.EnumConstantCase, value: UPPER_CASE }
+  # macros/constants → UPPER_CASE
+  - {
+      key: readability-identifier-naming.MacroDefinitionCase,
+      value: UPPER_CASE,
+    }
+  - { key: readability-identifier-naming.ConstantCase, value: UPPER_CASE }
