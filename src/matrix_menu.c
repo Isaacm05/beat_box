@@ -11,18 +11,18 @@ enum WaveShape { SINE, SQUARE, TRIANGLE, SAW };
 const char* waveNames[] = {"Sine", "Square", "Triangle", "Saw"};
 
 struct Track {
-  float freq;
-  float amp;
-  WaveShape shape;
+  float freq; // min 0 Hz
+  float amp; // from 0.0 to 1.0
+  WaveShape shape; // 4 options from waveNames
 };
 
-const int MAX_TRACKS = 8;
+const int MAX_TRACKS = 8; // edit for max number of tracks 
 Track tracks[MAX_TRACKS];
-int trackCount = 0;
-int selectedTrack = 0;
+int trackCount = 0; // current number of tracks
+int selectedTrack = 0; // current selected track
 
-bool inTrackView = false;
-int detailField = 0; // 0=freq, 1=amp, 2=shape
+bool inTrackView = false; // track view vs main menu
+int detailField = 0; // when in track view, 0=freq, 1=amp, 2=shape
 
 unsigned long holdStartLeft = 0;
 unsigned long holdStartRight = 0;
@@ -30,13 +30,13 @@ unsigned long holdStartBoth = 0;
 const unsigned long holdTime = 600; // hold time threshold
 
 void setup() {
-  pinMode(BTN_UP, INPUT_PULLUP);
+  pinMode(BTN_UP, INPUT_PULLUP); // buttons need pull up resistor
   pinMode(BTN_DOWN, INPUT_PULLUP);
   pinMode(BTN_LEFT, INPUT_PULLUP);
   pinMode(BTN_RIGHT, INPUT_PULLUP);
 
   // Create 2 default tracks
-  tracks[0] = {440.0, 0.8, SINE};
+  tracks[0] = {440.0, 0.8, SINE}; // can change these defaults or get rid of them
   tracks[1] = {880.0, 0.5, SQUARE};
   trackCount = 2;
 
@@ -44,21 +44,23 @@ void setup() {
 }
 
 void loop() {
+  // reads button values
   bool up = !digitalRead(BTN_UP);
   bool down = !digitalRead(BTN_DOWN);
   bool left = !digitalRead(BTN_LEFT);
   bool right = !digitalRead(BTN_RIGHT);
 
-  if (!inTrackView)
+  if (!inTrackView) // switch between track view controls to main menu controls
     handleMainMenu(up, down, left, right);
   else
     handleTrackView(up, down, left, right);
 
+  // draw display
   drawUI();
 }
 
 void handleMainMenu(bool up, bool down, bool left, bool right) {
-  // Scroll through tracks
+  // Scroll through tracks based on UP DOWN keys
   if (up && !down) {
     selectedTrack = (selectedTrack + 1) % trackCount;
     delay(200);
@@ -67,7 +69,7 @@ void handleMainMenu(bool up, bool down, bool left, bool right) {
     delay(200);
   }
 
-  // --- Hold both UP+DOWN to enter track view
+  // Hold both UP+DOWN to enter track view
   if (up && down) {
     if (holdStartBoth == 0) holdStartBoth = millis();
     if (millis() - holdStartBoth > holdTime) {
@@ -77,7 +79,7 @@ void handleMainMenu(bool up, bool down, bool left, bool right) {
     }
   } else holdStartBoth = 0;
 
-  // --- Hold RIGHT to add track
+  // Hold RIGHT to add track
   if (right) {
     if (holdStartRight == 0) holdStartRight = millis();
     if (millis() - holdStartRight > holdTime) {
@@ -86,7 +88,7 @@ void handleMainMenu(bool up, bool down, bool left, bool right) {
     }
   } else holdStartRight = 0;
 
-  // --- Hold LEFT to delete track
+  // Hold LEFT to delete track, deletes the currently selected track
   if (left) {
     if (holdStartLeft == 0) holdStartLeft = millis();
     if (millis() - holdStartLeft > holdTime) {
@@ -97,7 +99,7 @@ void handleMainMenu(bool up, bool down, bool left, bool right) {
 }
 
 void handleTrackView(bool up, bool down, bool left, bool right) {
-  // --- Hold LEFT to return to main menu
+  // Hold LEFT to return to main menu
   if (left) {
     if (holdStartLeft == 0) holdStartLeft = millis();
     if (millis() - holdStartLeft > holdTime) {
@@ -107,7 +109,7 @@ void handleTrackView(bool up, bool down, bool left, bool right) {
     }
   } else holdStartLeft = 0;
 
-  // --- Navigate fields
+  // Navigate fields
   if (up && !down) {
     detailField = (detailField + 1) % 3;
     delay(200);
@@ -116,7 +118,7 @@ void handleTrackView(bool up, bool down, bool left, bool right) {
     delay(200);
   }
 
-  // --- Adjust parameters
+  // Adjust parameters
   Track &t = tracks[selectedTrack];
   if (right && !left) {
     if (detailField == 0) t.freq += 10;
