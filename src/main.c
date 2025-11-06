@@ -1,28 +1,42 @@
-#include "waveform_gen.c"
+#include "hardware/irq.h"
+#include "pico/stdlib.h"
+#include "wavegen/presets.h"
+#include "wavegen/pwm_audio.c"
 #include <stdio.h>
-#include <stdlib.h>
+
+#define BUTTON_PIN 14
+
+volatile int current_preset = 0;
+volatile bool play_flag = false;
+
+void button_isr(uint gpio, uint32_t events) {
+    current_preset = (current_preset + 1) % num_presets;
+    play_flag = true;
+}
 
 int main() {
-    printf("=== Waveform Generator ===\n");
+    stdio_init_all();
+    printf("=== PWM Audio Playback Test ===\n");
 
-    float buffer[(int) SAMPLE_RATE];
+    pwm_audio_init();
 
-    WaveParams presets[] = {
-        {60.0f, 1.0f, 0.25f, 0, 0.0f, 8.0f, 0.0f, 4.0f, 0.5f},   // Kick
-        {250.0f, 0.8f, 0.15f, 0, 0.0f, 0.8f, 0.8f, 5.0f, 0.6f},  // Snare
-        {8000.0f, 0.5f, 0.05f, 4, 0.0f, 0.0f, 1.0f, 6.0f, 0.3f}, // Hat
-        {55.0f, 1.0f, 1.2f, 0, 0.0f, 2.0f, 0.0f, 2.5f, 0.25f},   // 808
-        {440.0f, 0.7f, 0.5f, 2, 0.0f, 0.0f, 0.0f, 3.0f, 0.2f},   // Tone
-        {8000.0f, 0.5f, 0.25f, 4, 0.0f, 0.0f, 1.0f, 3.0f, 0.4f}  // Open hat
-    };
+    gpio_init(BUTTON_PIN);
+    gpio_set_dir(BUTTON_PIN, GPIO_IN);
+    gpio_pull_up(BUTTON_PIN);
+    gpio_set_irq_enabled_with_callback(BUTTON_PIN, GPIO_IRQ_EDGE_FALL, true, &button_isr);
 
-    const char* names[] = {"kick", "snare", "hat", "808", "tone", "open_hat"};
+    static float buffer[(int) SAMPLE_RATE];
+    while (true) {
+        if (play_flag) {
+            play_flag = false;
+            printf("Playing preset #%d\n", current_preset);
 
-    for (int i = 0; i < 6; i++) {
-        int n = waveform_generate(buffer, SAMPLE_RATE, &presets[i]);
-        printf("Generated %s (%d samples)\n", names[i], n);
+            // Generate waveform
+            int n = waveform_generate(buffer, SAMPLE_RATE, &drum_presets[current_preset]);
+
+            // Output through PWM
+            pwm_play_buffer(buffer, n);
+        }
+        sleep_ms(10);
     }
-
-    printf("All waveforms generated successfully.\n");
-    return 0;
 }
