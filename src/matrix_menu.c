@@ -6,22 +6,15 @@
 #define BTN_DOWN   3
 #define BTN_LEFT   4
 #define BTN_RIGHT  5
+#define BTN_SELECT 6
 
-enum WaveShape { SINE, SQUARE, TRIANGLE, SAW };
-const char* waveNames[] = {"Sine", "Square", "Triangle", "Saw"};
 
-struct Track {
-  float freq; // min 0 Hz
-  float amp; // from 0.0 to 1.0
-  WaveShape shape; // 4 options from waveNames
-};
 
-const int MAX_TRACKS = 8; // edit for max number of tracks 
+const int MAX_TRACKS = 4; 
 Track tracks[MAX_TRACKS];
 int trackCount = 0; // current number of tracks
 int selectedTrack = 0; // current selected track
 
-bool inTrackView = false; // track view vs main menu
 int detailField = 0; // when in track view, 0=freq, 1=amp, 2=shape
 
 unsigned long holdStartLeft = 0;
@@ -34,6 +27,7 @@ void setup() {
   pinMode(BTN_DOWN, INPUT_PULLUP);
   pinMode(BTN_LEFT, INPUT_PULLUP);
   pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pinMode(BTN_SELECT, INPUT_PULLUP);
 
   // Create 2 default tracks
   tracks[0] = {440.0, 0.8, SINE}; // can change these defaults or get rid of them
@@ -49,12 +43,10 @@ void loop() {
   bool down = !digitalRead(BTN_DOWN);
   bool left = !digitalRead(BTN_LEFT);
   bool right = !digitalRead(BTN_RIGHT);
+  bool select = !digitalRead(BTN_SELECT);
 
-  if (!inTrackView) // switch between track view controls to main menu controls
-    handleMainMenu(up, down, left, right);
-  else
-    handleTrackView(up, down, left, right);
-
+  handleMainMenu(up, down, left, right);
+  
   // draw display
   drawUI();
 }
@@ -96,41 +88,6 @@ void handleMainMenu(bool up, bool down, bool left, bool right) {
       holdStartLeft = 0;
     }
   } else holdStartLeft = 0;
-}
-
-void handleTrackView(bool up, bool down, bool left, bool right) {
-  // Hold LEFT to return to main menu
-  if (left) {
-    if (holdStartLeft == 0) holdStartLeft = millis();
-    if (millis() - holdStartLeft > holdTime) {
-      inTrackView = false;
-      holdStartLeft = 0;
-      return;
-    }
-  } else holdStartLeft = 0;
-
-  // Navigate fields
-  if (up && !down) {
-    detailField = (detailField + 1) % 3;
-    delay(200);
-  } else if (down && !up) {
-    detailField = (detailField - 1 + 3) % 3;
-    delay(200);
-  }
-
-  // Adjust parameters
-  Track &t = tracks[selectedTrack];
-  if (right && !left) {
-    if (detailField == 0) t.freq += 10;
-    else if (detailField == 1) t.amp = min(1.0f, t.amp + 0.1f);
-    else if (detailField == 2) t.shape = (WaveShape)((t.shape + 1) % 4);
-    delay(200);
-  } else if (left && !right) {
-    if (detailField == 0) t.freq = max(0.0f, t.freq - 10);
-    else if (detailField == 1) t.amp = max(0.0f, t.amp - 0.1f);
-    else if (detailField == 2) t.shape = (WaveShape)((t.shape - 1 + 4) % 4);
-    delay(200);
-  }
 }
 
 void addTrack() {
