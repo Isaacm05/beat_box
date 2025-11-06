@@ -82,7 +82,7 @@ def waveform_generate(max_samples, p):
             makeup = 1.0 + 1.0 * comp
 
         abs_sig = np.abs(val)
-        over = abs_sig > threshold
+        over = abs_sig > threshold 
         gain = np.ones_like(val)
         gain[over] = threshold + (abs_sig[over] - threshold) / ratio
         gain[over] /= abs_sig[over] + 1e-8
