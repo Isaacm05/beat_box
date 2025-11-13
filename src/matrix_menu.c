@@ -1,5 +1,3 @@
-#include <Arduino.h>
-#include <Adafruit_GFX.h>
 #include <Adafruit_Protomatter.h>
 
 #define BTN_UP     2
