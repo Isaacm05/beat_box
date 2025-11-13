@@ -9,7 +9,6 @@
 #define BTN_SELECT 6
 
 
-
 const int MAX_TRACKS = 4; 
 Track tracks[MAX_TRACKS];
 int trackCount = 0; // current number of tracks
