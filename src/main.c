@@ -1,10 +1,10 @@
 #include "hardware/irq.h"
 #include "hardware/pwm.h"
 #include "pico/stdlib.h"
+#include "potentiometers/adc_potentiometer.h"
 #include "wavegen/presets.h"
 #include "wavegen/pwm_audio.h"
 #include "wavegen/waveform_gen.h"
-#include "adc_potentiometer.h"
 #include <stdio.h>
 
 #define BUTTON_PIN 21
@@ -35,7 +35,6 @@ void button_isr() {
 }
 */
 
-
 int main() {
     /*stdio_init_all();
     printf("=== PWM Audio Playback Test ===\n");
@@ -54,8 +53,8 @@ int main() {
             LCD_Clear(0x0000);
 
             pwm_play_buffer(buffer, (int) SAMPLE_RATE);
-            LCD_PlotWaveform(buffer, 44100, (&drum_presets[current_preset])->waveform_id,100, 100, 100, 100);
-            play = false;
+            LCD_PlotWaveform(buffer, 44100, (&drum_presets[current_preset])->waveform_id,100, 100,
+    100, 100); play = false;
         }
         sleep_ms(10);
     }
@@ -69,9 +68,9 @@ int main() {
     pwm_audio_init();
     setup_lcd();
 
-    adc_buffer= drum_preset; // Initialize pots to preset 4
+    adc_buffer = drum_preset; // Initialize pots to preset 4
 
-    for(;;){
+    for (;;) {
         // Main loop can be used to process adc_buffer based on mode_flag
         // For example, map adc_buffer values to parameters based on mode_flag
 
@@ -89,5 +88,4 @@ int main() {
 
         sleep_ms(500); // Adjust as needed
     }
-
 }
