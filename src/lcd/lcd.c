@@ -951,41 +951,65 @@ void LCD_DrawPicture(u16 x0, u16 y0, const Picture *pic)
 }
 
 
-void LCD_PlotWaveform(float *samples, int sample_count, int freq, int amp)
+void LCD_PlotWaveform(float *samples, int sample_count, int id, int freq, int amp, int decay, int dc_offset )
 {
-    int width = WIDTH;   // screen width
+    int width = WIDTH - 11;   // screen width
     int height = HEIGHT - 60;  // screen height , leave room for text at top 
+    int cut_len = 22000;
+    int buffer_count = sample_count - cut_len;
 
+
+    float buffer[(int) (sample_count - cut_len)];
+    memcpy(buffer, samples, (sample_count - cut_len - 1) * sizeof(int));
     // scale
-    int new_res = sample_count / width;
+    int new_res = buffer_count / width;
 
     // Previous point
     int prev_y = (height / 2);
-    int prev_x = width - 1;
+    int prev_x = 11;
     
-    // frequency string 
-    char frequency_str[50] = "Frequency: "; 
-    char frequency_val_str[5];
-    sprintf(frequency_val_str, "%d", freq);
+    LCD_DrawFillRectangle(170, 9, 235, 215, COLOR_WHITE);
 
-    char amplitude_str[25] = "  Amplitude: ";
-    char amplitude_val_str[5];
-    sprintf(amplitude_val_str, "%d", amp);
+    // characteristics string 
+    char settings_str[100]; 
+    char settings_str_2[100];
+    sprintf(settings_str, "Freq: %d | Amp: %d", freq, amp);
+    sprintf(settings_str_2, "Dec: %d | Off: %d", decay, dc_offset);
+    LCD_DrawString(195, 11, COLOR_BLACK, COLOR_BLACK, &settings_str, 16, 1, 1);
+    LCD_DrawString(175, 11, COLOR_BLACK, COLOR_BLACK, &settings_str_2, 16, 1, 1);
 
-    strcat(frequency_str, frequency_val_str);
-    strcat(amplitude_str, amplitude_val_str);
-    strcat(frequency_str, amplitude_str);
+    char type[100];
+
+    switch(id)
+    {
+        case 0:
+            strcpy(type, "sine");
+            break;
+        case 1:
+            strcpy(type, "square");
+            break;
+        case 2:
+            strcpy(type, "triangle");
+            break;
+        case 3:
+            strcpy(type, "saw");
+            break;
+        case 4:
+            strcpy(type, "noise");
+            break;
+    }
+    char id_str[100];
+    sprintf(id_str, "Signal ID: %s", type);
+    LCD_DrawString(215, 11, COLOR_BLACK, COLOR_BLACK, &id_str, 16, 1, 1);
 
 
-    LCD_DrawString(200, 11, COLOR_WHITE, COLOR_WHITE, &frequency_str, 16, 1, 1);
-
-    for (int x = width - 1; x >= 0; x--) {  // bottom to top
+    for (int x = 11; x < width; x++) {  // bottom to top
         // Average 
         float sum = 0;
         for (int i = 0; i < new_res; i++) {
-            int idx = (width - 1 - x) * new_res + i;
-            if (idx >= sample_count) break;
-            sum += samples[idx];
+            int idx = x * new_res + i;
+            if (idx >= buffer_count) break;
+            sum += buffer[idx];
         }
         float avg = sum / new_res;
 
