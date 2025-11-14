@@ -1,29 +1,56 @@
+#include "pwm_audio.h"
 #include "hardware/pwm.h"
 #include "pico/stdlib.h"
-#include "waveform_gen.c"
+#include <stdint.h>
 
-#define AUDIO_PIN 15
-#define SAMPLE_RATE 44100.0f
+// ==================================================
+// INIT PWM FOR AUDIO
+// ==================================================
+void pwm_audio_init() {
+    gpio_set_function(AUDIO_PIN, GPIO_FUNC_PWM);
 
-// Play a buffer through PWM
-void pwm_play_buffer(float* buffer, int len) {
-    uint slice = pwm_gpio_to_slice_num(AUDIO_PIN);
-    uint channel = pwm_gpio_to_channel(AUDIO_PIN);
+    int slice = pwm_gpio_to_slice_num(AUDIO_PIN);
+    int channel = pwm_gpio_to_channel(AUDIO_PIN);
 
+    pwm_config cfg = pwm_get_default_config();
+    pwm_config_set_clkdiv(&cfg, PWM_DIV);
+    pwm_config_set_wrap(&cfg, PWM_WRAP);
+
+    pwm_init(slice, &cfg, true);
+    pwm_set_chan_level(slice, channel, 0);
+}
+
+void convert_float_to_pwm(const float* float_buf, uint16_t* pwm_buf, int len) {
     for (int i = 0; i < len; i++) {
-        uint16_t level = (uint16_t) (buffer[i] * 65535);
-        pwm_set_chan_level(slice, channel, level);
-        sleep_us(1000000.0f / SAMPLE_RATE);
+        float x = float_buf[i];
+
+        // clamp
+        if (x < -1.0f)
+            x = -1.0f;
+        if (x > 1.0f)
+            x = 1.0f;
+
+    
+        float normalized = (x + 1.0f) * 0.5f; // now 0..1
+        pwm_buf[i] = (uint16_t) (normalized * PWM_WRAP);
     }
 }
 
-// Initialize PWM output
-void pwm_audio_init() {
-    gpio_set_function(AUDIO_PIN, GPIO_FUNC_PWM);
-    uint slice = pwm_gpio_to_slice_num(AUDIO_PIN);
+void pwm_play_buffer(const float* buffer, int len) {
+    uint16_t pwm_buf[(int) SAMPLE_RATE];
+    convert_float_to_pwm(buffer, pwm_buf, len);
 
-    pwm_config config = pwm_get_default_config();
-    pwm_config_set_clkdiv(&config, 1.0f);
-    pwm_init(slice, &config, true);
-    pwm_set_wrap(slice, 65535);
+    printf("buffer[0] = %u\n", pwm_buf[0]);
+    printf("buffer[100] = %u\n", pwm_buf[100]);
+    printf("buffer[500] = %u\n", pwm_buf[500]);
+
+    int slice = pwm_gpio_to_slice_num(AUDIO_PIN);
+    int channel = pwm_gpio_to_channel(AUDIO_PIN);
+
+    const uint32_t sample_delay_us = (uint32_t) (1e6f / SAMPLE_RATE);
+
+    for (int i = 0; i < len; i++) {
+        pwm_set_chan_level(slice, channel, pwm_buf[i]);
+        sleep_us(sample_delay_us);
+    }
 }
