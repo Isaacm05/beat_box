@@ -7,6 +7,7 @@
 #include "hardware/spi.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 #include "lcd.h"
 
 void nano_wait(int t);
@@ -15,10 +16,12 @@ lcd_dev_t lcddev;
 
 spi_inst_t *SPI = spi1; // Use SPI1 for the LCD
 
-#define CS_NUM  x
-#define DC_NUM x
-#define RESET_NUM x
+#define CS_NUM  25
+#define DC_NUM 37
+#define RESET_NUM 38
 
+#define COLOR_WHITE 0xFFFF
+#define COLOR_BLACK 0x0000
 #define CS_BIT  (1<<CS_NUM)
 #define RESET_BIT (1<<RESET_NUM)
 #define DC_BIT (1<<DC_NUM)
@@ -30,6 +33,8 @@ spi_inst_t *SPI = spi1; // Use SPI1 for the LCD
 #define DC_HIGH do { gpio_put(DC_NUM, 1); } while(0)
 #define DC_LOW  do { gpio_put(DC_NUM, 0); } while(0)
 
+#define WIDTH 320
+#define HEIGHT 240
 // Set the CS pin low if val is non-zero.
 // Note that when CS is being set high again, wait on SPI to not be busy.
 static void tft_select(int val)
@@ -38,7 +43,7 @@ static void tft_select(int val)
         while(spi_is_busy(SPI));
         CS_HIGH;
     } else {
-        while((sio_hw->gpio_in & CS_BIT) == 0) {
+        while((sio_hw->gpio_in & CS_BIT) == 0) { //
             ; // If CS is already low, this is an error.  Loop forever.
             // This has happened because something called a drawing subroutine
             // while one was already in process.  For instance, the main()
@@ -804,51 +809,93 @@ const unsigned char asc2_1608[95][16]={
 // num is the ASCII character number
 // size is the height of the character (either 12 or 16)
 // When mode is set, the background will be transparent.
+// Orientation for landscape or horizontal
 //===========================================================================
-void _LCD_DrawChar(u16 x,u16 y,u16 fc, u16 bc, char num, u8 size, u8 mode)
+void _LCD_DrawChar(u16 x,u16 y,u16 fc, u16 bc, char num, u8 size, u8 mode, int orientation)
 {
     u8 temp;
     u8 pos,t;
     num=num-' ';
-    LCD_SetWindow(x,y,x+size/2-1,y+size-1);
-    if (!mode) {
-        LCD_WriteData16_Prepare();
-        for(pos=0;pos<size;pos++) {
-            if (size==12)
-                temp=asc2_1206[(int)num][pos];
-            else
-                temp=asc2_1608[(int)num][pos];
-            for (t=0;t<size/2;t++) {
-                if (temp&0x01)
-                    LCD_WriteData16(fc);
-                else
-                    LCD_WriteData16(bc);
-                temp>>=1;
+    if (orientation== 1) { // rotate horizontal
+        LCD_SetWindow(x,y,x+size-1,y+size/2-1);
 
+        if (!mode) {
+            LCD_WriteData16_Prepare();
+            for(pos=0;pos<size;pos++) {
+                if (size==12)
+                    temp=asc2_1206[(int)num][pos];
+                else
+                    temp=asc2_1608[(int)num][pos];
+                for (t=0;t<size/2;t++) {
+                    if (temp&1<<t)
+                        LCD_WriteData16(fc);
+                    else
+                        LCD_WriteData16(bc);
+
+                }
+            }
+            LCD_WriteData16_End();
+        } 
+        else {
+            for(pos=0;pos<size;pos++)
+            {
+                if (size==12)
+                    temp=asc2_1206[(int)num][pos];
+                else
+                    temp=asc2_1608[(int)num][pos];
+                for (t=0;t<size/2;t++)
+                {
+                    if(temp&1<<t)
+                        _LCD_DrawPoint(x+(size -1 -pos),y+t,fc);
+                }
             }
         }
-        LCD_WriteData16_End();
-    } else {
-        for(pos=0;pos<size;pos++)
-        {
-            if (size==12)
-                temp=asc2_1206[(int)num][pos];
-            else
-                temp=asc2_1608[(int)num][pos];
-            for (t=0;t<size/2;t++)
+    } 
+
+    else 
+    {
+        LCD_SetWindow(x,y,x+size/2-1,y+size-1);
+
+        if (!mode) {
+            LCD_WriteData16_Prepare();
+            for(pos=0;pos<size;pos++) {
+                if (size==12)
+                    temp=asc2_1206[(int)num][pos];
+                else
+                    temp=asc2_1608[(int)num][pos];
+                for (t=0;t<size/2;t++) {
+                    if (temp&0x01)
+                        LCD_WriteData16(fc);
+                    else
+                        LCD_WriteData16(bc);
+                    temp>>=1;
+
+                }
+            }
+            LCD_WriteData16_End();
+        } 
+        else {
+            for(pos=0;pos<size;pos++)
             {
-                if(temp&0x01)
-                    _LCD_DrawPoint(x+t,y+pos,fc);
-                temp>>=1;
+                if (size==12)
+                    temp=asc2_1206[(int)num][pos];
+                else
+                    temp=asc2_1608[(int)num][pos];
+                for (t=0;t<size/2;t++)
+                {
+                    if(temp&0x01)
+                        _LCD_DrawPoint(x+t,y+pos,fc);
+                    temp>>=1;
+                }
             }
         }
     }
 }
 
-void LCD_DrawChar(u16 x,u16 y,u16 fc, u16 bc, char num, u8 size, u8 mode)
+void LCD_DrawChar(u16 x,u16 y,u16 fc, u16 bc, char num, u8 size, u8 mode, int orientation)
 {
     lcddev.select(1);
-    _LCD_DrawChar(x,y,fc,bc,num,size,mode);
+    _LCD_DrawChar(x,y,fc,bc,num,size,mode, orientation);
     lcddev.select(0);
 }
 
@@ -859,15 +906,18 @@ void LCD_DrawChar(u16 x,u16 y,u16 fc, u16 bc, char num, u8 size, u8 mode)
 // size is the height of the character (either 12 or 16)
 // When mode is set, the background will be transparent.
 //===========================================================================
-void LCD_DrawString(u16 x,u16 y, u16 fc, u16 bg, const char *p, u8 size, u8 mode)
+void LCD_DrawString(u16 x,u16 y, u16 fc, u16 bg, const char *p, u8 size, u8 mode, int orientation)
 {
     lcddev.select(1);
     while((*p<='~')&&(*p>=' '))
     {
         if(x>(lcddev.width-1)||y>(lcddev.height-1))
         return;
-        _LCD_DrawChar(x,y,fc,bg,*p,size,mode);
-        x+=size/2;
+        _LCD_DrawChar(x,y,fc,bg,*p,size,mode, orientation);
+        if (orientation)
+        {y+=size/2;}
+        else
+        {x+=size/2;}
         p++;
     }
     lcddev.select(0);
@@ -898,4 +948,54 @@ void LCD_DrawPicture(u16 x0, u16 y0, const Picture *pic)
 
     LCD_WriteData16_End();
     lcddev.select(0);
+}
+
+
+void LCD_PlotWaveform(float *samples, int sample_count, int freq, int amp)
+{
+    int width = WIDTH;   // screen width
+    int height = HEIGHT - 60;  // screen height , leave room for text at top 
+
+    // scale
+    int new_res = sample_count / width;
+
+    // Previous point
+    int prev_y = (height / 2);
+    int prev_x = width - 1;
+    
+    // frequency string 
+    char frequency_str[50] = "Frequency: "; 
+    char frequency_val_str[5];
+    sprintf(frequency_val_str, "%d", freq);
+
+    char amplitude_str[25] = "  Amplitude: ";
+    char amplitude_val_str[5];
+    sprintf(amplitude_val_str, "%d", amp);
+
+    strcat(frequency_str, frequency_val_str);
+    strcat(amplitude_str, amplitude_val_str);
+    strcat(frequency_str, amplitude_str);
+
+
+    LCD_DrawString(200, 11, COLOR_WHITE, COLOR_WHITE, &frequency_str, 16, 1, 1);
+
+    for (int x = width - 1; x >= 0; x--) {  // bottom to top
+        // Average 
+        float sum = 0;
+        for (int i = 0; i < new_res; i++) {
+            int idx = (width - 1 - x) * new_res + i;
+            if (idx >= sample_count) break;
+            sum += samples[idx];
+        }
+        float avg = sum / new_res;
+
+        // Map amplitude
+        int y = ((avg + 1.0f) * (height - 1) / 2.0f);
+
+        // Draw line between points
+        LCD_DrawLine(prev_y, prev_x, y, x, COLOR_WHITE);
+
+        prev_x = x;
+        prev_y = y;
+    }
 }
