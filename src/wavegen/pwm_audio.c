@@ -30,7 +30,6 @@ void convert_float_to_pwm(const float* float_buf, uint16_t* pwm_buf, int len) {
         if (x > 1.0f)
             x = 1.0f;
 
-    
         float normalized = (x + 1.0f) * 0.5f; // now 0..1
         pwm_buf[i] = (uint16_t) (normalized * PWM_WRAP);
     }

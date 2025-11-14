@@ -46,8 +46,9 @@ int main() {
 
     for (;;) {
         if (play) {
-            pwm_play_buffer(buffer, (int) SAMPLE_RATE);
             LCD_Clear(0x0000);
+
+            pwm_play_buffer(buffer, (int) SAMPLE_RATE);
             LCD_PlotWaveform(buffer, 44100, 100, 100);
             play = false;
         }
