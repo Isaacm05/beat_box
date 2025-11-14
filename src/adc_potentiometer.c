@@ -1,7 +1,3 @@
-#include "hardware/adc.h"
-#include "hardware/dma.h"
-#include "hardware/gpio.h"
-#include "hardware/irq.h"
 #include "adc_potentiometer.h"
 #include <stdio.h>
 #include <stdlib.h>
