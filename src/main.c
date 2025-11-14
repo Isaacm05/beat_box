@@ -5,21 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Set up pot and button io/configs
-// Note all pins may be subject to change, so these values are not finalzied
-
-#define BUTTON_PIN 15 // Pin num of button
-#define POT_PIN 26    // Pin num of 1st potentiometer, im assuming follow sequentially
-#define POT_NUM 4     // Number of potentiometers
-#define PARAM_NUM 8   // Number of parameters, 8 as we know of rn
-
-uint16_t raw_adc_buffer[POT_NUM];
-uint16_t adc_buffer[PARAM_NUM];
-volatile bool mode_flag = false; // false = page 0 (params 0-3), true = page 1 (params 4-7)
-
-bool pot_engaged[4] = {false};
-bool last_mode = false;
-
 /*
 
 Explaining thought process for the 4 pots and button switch up.
@@ -129,7 +114,7 @@ accurate so 50% may be different for each one)
 void check_pots() {
     for (int i = 0; i < 4; i++) {
 
-        uint16_t pot_val = adc_buffer[i] / 4095;
+        float pot_val = raw_adc_buffer[i] / 4095.0f;
         int idx = i + (mode_flag ? 4 : 0);
 
         float param_val = adc_buffer[idx];
@@ -142,7 +127,7 @@ void check_pots() {
             }
         }
 
-        adc_buffer[param_index] = pot_val;
+        adc_buffer[idx] = pot_val;
     }
 }
 
@@ -168,12 +153,12 @@ int main() {
         if (mode_flag) {
             // Map to parameters 4-7
             for (int i = 0; i < POT_NUM; i++) {
-                printf("Param %d: %d\n", i + 4, adc_buffer[i]);
+                printf("Param %d: %f\n", i + 4, adc_buffer[i]);
             }
         } else {
             // Map to parameters 0-3
             for (int i = 0; i < POT_NUM; i++) {
-                printf("Param %d: %d\n", i, adc_buffer[i]);
+                printf("Param %d: %f\n", i, adc_buffer[i]);
             }
         }
         sleep_ms(500); // Adjust as needed
