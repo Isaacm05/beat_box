@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "pwm.h": "c",
+        "waveform_gen.h": "c",
+        "stdlib.h": "c",
+        "pwm_audio.h": "c",
+        "stdint.h": "c",
+        "irq.h": "c"
+    }
+}
