@@ -4,6 +4,7 @@
 #include "wavegen/presets.h"
 #include "wavegen/pwm_audio.h"
 #include "wavegen/waveform_gen.h"
+#include "adc_potentiometer.h"
 #include <stdio.h>
 
 #define BUTTON_PIN 21
@@ -15,8 +16,10 @@
 int current_preset = 0;
 bool play = false;
 
-static float buffer[(int) SAMPLE_RATE];
+drum_preset = drum_presets[4]; // Example: select the "Tone" preset
 
+static float buffer[(int) SAMPLE_RATE];
+/*
 void button_isr() {
     gpio_acknowledge_irq(BUTTON_PIN, GPIO_IRQ_EDGE_RISE);
     // printf("Hello World\n");
@@ -30,9 +33,11 @@ void button_isr() {
 
     play = true;
 }
+*/
+
 
 int main() {
-    stdio_init_all();
+    /*stdio_init_all();
     printf("=== PWM Audio Playback Test ===\n");
 
     pwm_audio_init();
@@ -54,4 +59,35 @@ int main() {
         }
         sleep_ms(10);
     }
+    */
+
+    stdio_init_all();
+
+    init_button();
+    init_adc_dma();
+
+    pwm_audio_init();
+    setup_lcd();
+
+    adc_buffer= drum_preset; // Initialize pots to preset 4
+
+    for(;;){
+        // Main loop can be used to process adc_buffer based on mode_flag
+        // For example, map adc_buffer values to parameters based on mode_flag
+
+        check_pots();
+
+        get_pots();
+
+        normal_pots();
+
+        drum_preset = adc_buffer; // Set drum_preset = pots vals
+        waveform_generate(buffer, SAMPLE_RATE, &drum_preset);
+
+        pwm_play_buffer(buffer, (int) SAMPLE_RATE);
+        LCD_PlotWaveform(buffer, 44100, 100, 100);
+
+        sleep_ms(500); // Adjust as needed
+    }
+
 }

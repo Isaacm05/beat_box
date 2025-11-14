@@ -5,8 +5,8 @@
 #include <stdlib.h>
 
 // Global variable definitions
-uint16_t raw_adc_buffer[PARAM_NUM];
-float adc_buffer[PARAM_NUM] = {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f};
+
+float un_raw_buffer[PARAM_NUM];
 volatile bool mode_flag = false;
 bool pot_engaged[4] = {false};
 bool last_mode = false;
@@ -130,7 +130,7 @@ void check_pots() {
         float pot_val = raw_adc_buffer[i] / 4095.0f;
         int idx = i + (mode_flag ? 4 : 0);
 
-        float param_val = adc_buffer[idx];
+        float param_val = un_raw_buffer[idx];
 
         if (!pot_engaged[i]) {
             if (fabs(pot_val - param_val) <= 0.02) {
@@ -140,7 +140,7 @@ void check_pots() {
             }
         }
 
-        adc_buffer[idx] = pot_val;
+        un_raw_buffer[idx] = pot_val;
     }
 }
 
@@ -148,18 +148,18 @@ void get_pots() {
     if (mode_flag) {
         // Map to parameters 4-7
         for (int i = 0; i < POT_NUM; i++) {
-            printf("Param %d: %f\n", i + POT_NUM, adc_buffer[i + POT_NUM]);
+            printf("Param %d: %f\n", i + POT_NUM, un_raw_buffer[i + POT_NUM]);
         }
     } else {
         // Map to parameters 0-3
         for (int i = 0; i < POT_NUM; i++) {
-            printf("Param %d: %f\n", i, adc_buffer[i]);
+            printf("Param %d: %f\n", i, un_raw_buffer[i]);
         }
     }
 }
 
 // Main function
-int main() {
+/*int main() {
     stdio_init_all();
 
     init_button();
@@ -178,3 +178,4 @@ int main() {
 
     return 0;
 }
+*/

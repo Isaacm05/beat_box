@@ -5,7 +5,7 @@
         "stdlib.h": "c",
         "pwm_audio.h": "c",
         "stdint.h": "c",
-        "irq.h": "c"
+        "irq.h": "c",
         "adc_potentiometer.h": "c"
     }
 }

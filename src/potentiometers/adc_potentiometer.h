@@ -2,6 +2,7 @@
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/irq.h"
+#include "../wavegen/waveform_gen.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -14,7 +15,7 @@
 #define PARAM_NUM 8   // Number of parameters, 8 as we know of rn
 
 extern uint16_t raw_adc_buffer[PARAM_NUM];
-extern float adc_buffer[PARAM_NUM];
+extern WaveParams adc_buffer[PARAM_NUM];
 
 extern volatile bool mode_flag; // false = page 0 (params 0-3), true = page 1 (params 4-7)
 
