@@ -1,6 +1,6 @@
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
-#include "lcd.h"
+#include "lcd/lcd.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>   
