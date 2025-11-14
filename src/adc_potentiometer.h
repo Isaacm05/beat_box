@@ -17,3 +17,7 @@ volatile bool mode_flag = false; // false = page 0 (params 0-3), true = page 1 (
 
 bool pot_engaged[4] = {false};
 bool last_mode = false;
+
+void init_button();
+void init_adc_dma();
+void check_pots();
