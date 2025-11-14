@@ -2,6 +2,7 @@
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/irq.h"
+#include "adc_potentiometer.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -13,7 +14,7 @@
 #define POT_NUM 4     // Number of potentiometers
 #define PARAM_NUM 8   // Number of parameters, 8 as we know of rn
 
-uint16_t raw_adc_buffer[POT_NUM];
+uint16_t raw_adc_buffer[PARAM_NUM];
 uint16_t adc_buffer[PARAM_NUM];
 volatile bool mode_flag = false; // false = page 0 (params 0-3), true = page 1 (params 4-7)
 
@@ -127,6 +128,14 @@ accurate so 50% may be different for each one)
 */
 
 void check_pots() {
+
+    
+    if (mode_flag != last_mode) {
+        for (int i = 0; i < 4; i++)
+            pot_engaged[i] = false;
+        last_mode = mode_flag;
+    }
+
     for (int i = 0; i < 4; i++) {
 
         uint16_t pot_val = adc_buffer[i] / 4095;
@@ -143,6 +152,21 @@ void check_pots() {
         }
 
         adc_buffer[param_index] = pot_val;
+    }
+}
+
+void get_pots(){
+    if (mode_flag) {
+        // Map to parameters 4-7
+        for (int i = 0; i < POT_NUM; i++) {
+            printf("Param %d: %d\n", i + POT_NUM, adc_buffer[i]);
+        }
+    }
+    else {
+        // Map to parameters 0-3
+        for (int i = 0; i < POT_NUM; i++) {
+            printf("Param %d: %d\n", i, adc_buffer[i]);
+        }
     }
 }
 
@@ -165,17 +189,8 @@ int main() {
 
         check_pots();
 
-        if (mode_flag) {
-            // Map to parameters 4-7
-            for (int i = 0; i < POT_NUM; i++) {
-                printf("Param %d: %d\n", i + 4, adc_buffer[i]);
-            }
-        } else {
-            // Map to parameters 0-3
-            for (int i = 0; i < POT_NUM; i++) {
-                printf("Param %d: %d\n", i, adc_buffer[i]);
-            }
-        }
+        get_pots();
+        
         sleep_ms(500); // Adjust as needed
     }
 
