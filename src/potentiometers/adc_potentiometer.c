@@ -4,6 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Global variable definitions
+uint16_t raw_adc_buffer[PARAM_NUM];
+float adc_buffer[PARAM_NUM] = {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f};
+volatile bool mode_flag = false;
+bool pot_engaged[4] = {false};
+bool last_mode = false;
+
 /*
 
 Explaining thought process for the 4 pots and button switch up.
@@ -141,12 +148,12 @@ void get_pots() {
     if (mode_flag) {
         // Map to parameters 4-7
         for (int i = 0; i < POT_NUM; i++) {
-            printf("Param %d: %d\n", i + POT_NUM, adc_buffer[i + POT_NUM]);
+            printf("Param %d: %f\n", i + POT_NUM, adc_buffer[i + POT_NUM]);
         }
     } else {
         // Map to parameters 0-3
         for (int i = 0; i < POT_NUM; i++) {
-            printf("Param %d: %d\n", i, adc_buffer[i]);
+            printf("Param %d: %f\n", i, adc_buffer[i]);
         }
     }
 }
