@@ -1,5 +1,7 @@
 #include "hardware/irq.h"
 #include "hardware/pwm.h"
+#include "lcd/lcd.h"
+#include "lcd/lcd_setup.h"
 #include "pico/stdlib.h"
 #include "potentiometers/adc_potentiometer.h"
 #include "wavegen/presets.h"
@@ -7,59 +9,56 @@
 #include "wavegen/waveform_gen.h"
 #include <stdio.h>
 
-#define BUTTON_PIN 21
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-int current_preset = 0;
-bool play = false;
-
-drum_preset = drum_presets[4]; // Example: select the "Tone" preset
-
 static float buffer[(int) SAMPLE_RATE];
-/*
-void button_isr() {
-    gpio_acknowledge_irq(BUTTON_PIN, GPIO_IRQ_EDGE_RISE);
-    // printf("Hello World\n");
 
-    printf("Playing preset #%d\n", current_preset);
-    // Generate waveform
-    waveform_generate(buffer, SAMPLE_RATE, &drum_presets[current_preset]);
+// int current_preset = 0;
+// bool play = false;
 
-    // Output through PWM
-    current_preset = (current_preset + 1) % 6;
+// void test_button_isr() {
+//     gpio_acknowledge_irq(21, GPIO_IRQ_EDGE_RISE);
+//     // printf("Hello World\n");
 
-    play = true;
-}
-*/
+//     printf("Playing preset #%d\n", current_preset);
+//     // Generate waveform
+//     waveform_generate(buffer, SAMPLE_RATE, &drum_presets[current_preset]);
+
+//     // Output through PWM
+//     current_preset = (current_preset + 1) % 6;
+
+//     play = true;
+// }
+
+// int main() {
+//     stdio_init_all();
+//     printf("=== PWM Audio Playback Test ===\n");
+
+//     pwm_audio_init();
+//     setup_lcd();
+
+//     gpio_init(21);
+//     gpio_pull_down(21);
+//     gpio_add_raw_irq_handler_masked((1u << 21), test_button_isr);
+//     irq_set_enabled(IO_IRQ_BANK0, true);
+//     gpio_set_irq_enabled(21, GPIO_IRQ_EDGE_RISE, true);
+
+//     for (;;) {
+//         if (play) {
+//             LCD_Clear(0x0000);
+
+//             pwm_play_buffer(buffer, (int) SAMPLE_RATE);
+//             LCD_PlotWaveform(buffer, 44100, (&drum_presets[current_preset])->waveform_id, 100,
+//             100,
+//                              100, 100);
+//             play = false;
+//         }
+//         sleep_ms(10);
+//     }
+//     return 0;
+// }
+
+WaveParams adc_buffer;
 
 int main() {
-    /*stdio_init_all();
-    printf("=== PWM Audio Playback Test ===\n");
-
-    pwm_audio_init();
-    setup_lcd();
-
-    gpio_init(BUTTON_PIN);
-    gpio_pull_down(BUTTON_PIN);
-    gpio_add_raw_irq_handler_masked((1u << BUTTON_PIN), button_isr);
-    irq_set_enabled(IO_IRQ_BANK0, true);
-    gpio_set_irq_enabled(BUTTON_PIN, GPIO_IRQ_EDGE_RISE, true);
-
-    for (;;) {
-        if (play) {
-            LCD_Clear(0x0000);
-
-            pwm_play_buffer(buffer, (int) SAMPLE_RATE);
-            LCD_PlotWaveform(buffer, 44100, (&drum_presets[current_preset])->waveform_id,100, 100,
-    100, 100); play = false;
-        }
-        sleep_ms(10);
-    }
-    */
-
     stdio_init_all();
 
     init_button();
@@ -68,23 +67,19 @@ int main() {
     pwm_audio_init();
     setup_lcd();
 
-    adc_buffer = drum_preset; // Initialize pots to preset 4
-
     for (;;) {
         // Main loop can be used to process adc_buffer based on mode_flag
         // For example, map adc_buffer values to parameters based on mode_flag
 
-        check_pots();
+        get_pot_val();
+        adc_buffer = normal_pots(adc_buffer);
 
-        get_pots();
-
-        normal_pots();
-
-        drum_preset = adc_buffer; // Set drum_preset = pots vals
-        waveform_generate(buffer, SAMPLE_RATE, &drum_preset);
+        waveform_generate(buffer, SAMPLE_RATE, &adc_buffer);
 
         pwm_play_buffer(buffer, (int) SAMPLE_RATE);
-        LCD_PlotWaveform(buffer, 44100, 100, 100);
+        LCD_PlotWaveform(buffer, 44100, adc_buffer.waveform_id, (int) adc_buffer.frequency,
+                         (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
+                         (int) (adc_buffer.offset_dc * 100));
 
         sleep_ms(500); // Adjust as needed
     }

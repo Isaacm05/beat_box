@@ -91,5 +91,6 @@ typedef struct {
 } Picture;
 
 void LCD_DrawPicture(u16 x0, u16 y0, const Picture *pic);
+void LCD_PlotWaveform(float *samples, int sample_count, int id, int freq, int amp, int decay, int dc_offset);
 
 #endif

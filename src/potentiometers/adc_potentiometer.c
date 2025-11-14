@@ -6,7 +6,8 @@
 
 // Global variable definitions
 
-float un_raw_buffer[PARAM_NUM];
+uint16_t raw_adc_buffer[PARAM_NUM];
+float unnorm_buffer[PARAM_NUM];
 volatile bool mode_flag = false;
 bool pot_engaged[4] = {false};
 bool last_mode = false;
@@ -83,8 +84,8 @@ void init_adc_dma() {
 
     int dma_chan = 0;
     dma_hw->ch[dma_chan].transfer_count = (1u << 28) | POT_NUM;
-    dma_hw->ch[dma_chan].read_addr = &adc_hw->fifo;
-    dma_hw->ch[dma_chan].write_addr = raw_adc_buffer;
+    dma_hw->ch[dma_chan].read_addr = (uint32_t)&adc_hw->fifo;
+    dma_hw->ch[dma_chan].write_addr = (uint32_t)raw_adc_buffer;
 
     uint32_t temp = 0;
     temp |= (1u << 2);
@@ -117,7 +118,7 @@ pot values, which may not be desired
 accurate so 50% may be different for each one)
 */
 
-void check_pots() {
+void get_pot_val() {
 
     if (mode_flag != last_mode) {
         for (int i = 0; i < 4; i++)
@@ -130,7 +131,7 @@ void check_pots() {
         float pot_val = raw_adc_buffer[i] / 4095.0f;
         int idx = i + (mode_flag ? 4 : 0);
 
-        float param_val = un_raw_buffer[idx];
+        float param_val = unnorm_buffer[idx];
 
         if (!pot_engaged[i]) {
             if (fabs(pot_val - param_val) <= 0.02) {
@@ -140,22 +141,52 @@ void check_pots() {
             }
         }
 
-        un_raw_buffer[idx] = pot_val;
+        unnorm_buffer[idx] = pot_val;
     }
-}
 
-void get_pots() {
     if (mode_flag) {
         // Map to parameters 4-7
         for (int i = 0; i < POT_NUM; i++) {
-            printf("Param %d: %f\n", i + POT_NUM, un_raw_buffer[i + POT_NUM]);
+            printf("Param %d: %f\n", i + POT_NUM, unnorm_buffer[i + POT_NUM]);
         }
     } else {
         // Map to parameters 0-3
         for (int i = 0; i < POT_NUM; i++) {
-            printf("Param %d: %f\n", i, un_raw_buffer[i]);
+            printf("Param %d: %f\n", i, unnorm_buffer[i]);
         }
     }
+}
+
+WaveParams normal_pots(WaveParams adc_buffer) {
+    WaveParams params = adc_buffer;
+
+    // Pot 0: Frequency (20-9000 Hz)
+    params.frequency = unnorm_buffer[0] * (9000.0f - 20.0f) + 20.0f;
+
+    // Pot 1: Amplitude (0.0-1.0)
+    params.amplitude = unnorm_buffer[1];
+
+    // Pot 2: Decay (0.0-2.0 s)
+    params.decay = unnorm_buffer[2] * 2.0f;
+
+    // Pot 3: DC Offset (0.0-1.0)
+    params.offset_dc = unnorm_buffer[3];
+
+    // Pot 4: Pitch Decay (0.0-10.0) - logarithmic mapping for better control
+    // Maps pot value (0.0-1.0) logarithmically to range (0.0-10.0)
+    // Using exp(x) - 1 to get exponential curve from 0 to ~1.7, then scale to 10
+    params.pitch_decay = (expf(unnorm_buffer[4] * 2.3026f) - 1.0f) * 1.0f;
+
+    // Pot 5: Noise Mix (0.0-1.0)
+    params.noise_mix = unnorm_buffer[5];
+
+    // Pot 6: Envelope Curve (0.0-10.0)
+    params.env_curve = unnorm_buffer[6] * 10.0f;
+
+    // Pot 7: Compression Amount (0.0-1.0)
+    params.comp_amount = unnorm_buffer[7];
+
+    return params;
 }
 
 // Main function

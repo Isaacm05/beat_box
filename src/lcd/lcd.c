@@ -970,15 +970,15 @@ void LCD_PlotWaveform(float *samples, int sample_count, int id, int freq, int am
     
     LCD_DrawFillRectangle(170, 9, 235, 215, COLOR_WHITE);
 
-    // characteristics string 
-    char settings_str[100]; 
+    // characteristics string
+    char settings_str[100];
     char settings_str_2[100];
     sprintf(settings_str, "Freq: %d | Amp: %d", freq, amp);
     sprintf(settings_str_2, "Dec: %d | Off: %d", decay, dc_offset);
-    LCD_DrawString(195, 11, COLOR_BLACK, COLOR_BLACK, &settings_str, 16, 1, 1);
-    LCD_DrawString(175, 11, COLOR_BLACK, COLOR_BLACK, &settings_str_2, 16, 1, 1);
+    LCD_DrawString(195, 11, COLOR_BLACK, COLOR_BLACK, settings_str, 16, 1, 1);
+    LCD_DrawString(175, 11, COLOR_BLACK, COLOR_BLACK, settings_str_2, 16, 1, 1);
 
-    char type[100];
+    char type[20];
 
     switch(id)
     {
@@ -998,9 +998,9 @@ void LCD_PlotWaveform(float *samples, int sample_count, int id, int freq, int am
             strcpy(type, "noise");
             break;
     }
-    char id_str[100];
+    char id_str[40];
     sprintf(id_str, "Signal ID: %s", type);
-    LCD_DrawString(215, 11, COLOR_BLACK, COLOR_BLACK, &id_str, 16, 1, 1);
+    LCD_DrawString(215, 11, COLOR_BLACK, COLOR_BLACK, id_str, 16, 1, 1);
 
 
     for (int x = 11; x < width; x++) {  // bottom to top

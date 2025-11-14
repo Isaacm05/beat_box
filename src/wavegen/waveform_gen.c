@@ -5,6 +5,10 @@
 #define SAMPLE_RATE 44100.0f
 #define PI 3.14159265f
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 // --- Waveform functions ---
 static inline float wave_sine(float phase) {
     return sinf(2 * PI * phase);

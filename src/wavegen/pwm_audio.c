@@ -2,6 +2,7 @@
 #include "hardware/pwm.h"
 #include "pico/stdlib.h"
 #include <stdint.h>
+#include <stdio.h>
 
 // ==================================================
 // INIT PWM FOR AUDIO
