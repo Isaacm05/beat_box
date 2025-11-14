@@ -181,12 +181,6 @@ int main() {
         // Main loop can be used to process adc_buffer based on mode_flag
         // For example, map adc_buffer values to parameters based on mode_flag
 
-        if (mode_flag != last_mode) {
-            for (int i = 0; i < 4; i++)
-                pot_engaged[i] = false;
-            last_mode = mode_flag;
-        }
-
         check_pots();
 
         get_pots();
