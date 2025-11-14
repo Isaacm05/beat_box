@@ -1,7 +1,6 @@
-#include "hardware/adc.h"
-#include "hardware/dma.h"
-#include "hardware/gpio.h"
-#include "hardware/irq.h"
+#include "adc_potentiometer.h"
+#include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -112,6 +111,13 @@ accurate so 50% may be different for each one)
 */
 
 void check_pots() {
+
+    if (mode_flag != last_mode) {
+        for (int i = 0; i < 4; i++)
+            pot_engaged[i] = false;
+        last_mode = mode_flag;
+    }
+
     for (int i = 0; i < 4; i++) {
 
         float pot_val = raw_adc_buffer[i] / 4095.0f;
@@ -120,7 +126,7 @@ void check_pots() {
         float param_val = adc_buffer[idx];
 
         if (!pot_engaged[i]) {
-            if ((pot_val - param_val) <= 0.02 || (pot_val - param_val) >= -0.02) {
+            if (fabs(pot_val - param_val) <= 0.02) {
                 pot_engaged[i] = true;
             } else {
                 continue;
@@ -128,6 +134,20 @@ void check_pots() {
         }
 
         adc_buffer[idx] = pot_val;
+    }
+}
+
+void get_pots() {
+    if (mode_flag) {
+        // Map to parameters 4-7
+        for (int i = 0; i < POT_NUM; i++) {
+            printf("Param %d: %d\n", i + POT_NUM, adc_buffer[i + POT_NUM]);
+        }
+    } else {
+        // Map to parameters 0-3
+        for (int i = 0; i < POT_NUM; i++) {
+            printf("Param %d: %d\n", i, adc_buffer[i]);
+        }
     }
 }
 
@@ -142,18 +162,10 @@ int main() {
         // Main loop can be used to process adc_buffer based on mode_flag
         // For example, map adc_buffer values to parameters based on mode_flag
 
+        check_pots();
 
-        if (mode_flag) {
-            // Map to parameters 4-7
-            for (int i = 0; i < POT_NUM; i++) {
-                printf("Param %d: %f\n", i + 4, adc_buffer[i]);
-            }
-        } else {
-            // Map to parameters 0-3
-            for (int i = 0; i < POT_NUM; i++) {
-                printf("Param %d: %f\n", i, adc_buffer[i]);
-            }
-        }
+        get_pots();
+
         sleep_ms(500); // Adjust as needed
     }
 
