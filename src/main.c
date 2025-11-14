@@ -22,6 +22,9 @@ static float buffer[(int) SAMPLE_RATE];
 //     // Generate waveform
 //     waveform_generate(buffer, SAMPLE_RATE, &drum_presets[current_preset]);
 
+// printf("buffer[0] = %u\n", pwm_buf[0]);
+// printf("buffer[100] = %u\n", pwm_buf[100]);
+// printf("buffer[500] = %u\n", pwm_buf[500]);
 //     // Output through PWM
 //     current_preset = (current_preset + 1) % 6;
 

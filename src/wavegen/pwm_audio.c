@@ -40,10 +40,6 @@ void pwm_play_buffer(const float* buffer, int len) {
     uint16_t pwm_buf[(int) SAMPLE_RATE];
     convert_float_to_pwm(buffer, pwm_buf, len);
 
-    printf("buffer[0] = %u\n", pwm_buf[0]);
-    printf("buffer[100] = %u\n", pwm_buf[100]);
-    printf("buffer[500] = %u\n", pwm_buf[500]);
-
     int slice = pwm_gpio_to_slice_num(AUDIO_PIN);
     int channel = pwm_gpio_to_channel(AUDIO_PIN);
 
