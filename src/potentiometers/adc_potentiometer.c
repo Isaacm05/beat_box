@@ -84,8 +84,8 @@ void init_adc_dma() {
 
     int dma_chan = 0;
     dma_hw->ch[dma_chan].transfer_count = (1u << 28) | POT_NUM;
-    dma_hw->ch[dma_chan].read_addr = (uint32_t)&adc_hw->fifo;
-    dma_hw->ch[dma_chan].write_addr = (uint32_t)raw_adc_buffer;
+    dma_hw->ch[dma_chan].read_addr = (uint32_t) &adc_hw->fifo;
+    dma_hw->ch[dma_chan].write_addr = (uint32_t) raw_adc_buffer;
 
     uint32_t temp = 0;
     temp |= (1u << 2);

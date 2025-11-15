@@ -1,14 +1,14 @@
 #ifndef ADC_POTENTIOMETER_H
 #define ADC_POTENTIOMETER_H
 
+#include "../wavegen/waveform_gen.h"
 #include "hardware/adc.h"
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/irq.h"
-#include "../wavegen/waveform_gen.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 // Set up pot and button io/configs
 // Note all pins may be subject to change, so these values are not finalized

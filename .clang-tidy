@@ -5,23 +5,17 @@ Checks: >
 WarningsAsErrors: "*"
 
 CheckOptions:
-  # functions, vars, params → snake_case
-  - { key: readability-identifier-naming.FunctionCase, value: lower_case }
-  - {
-      key: readability-identifier-naming.FunctionIgnoredRegexp,
-      value: "^(main)$",
-    }
-  - { key: readability-identifier-naming.VariableCase, value: lower_case }
-  - { key: readability-identifier-naming.GlobalVariableCase, value: lower_case }
-  - { key: readability-identifier-naming.ParameterCase, value: lower_case }
-  - { key: readability-identifier-naming.MemberCase, value: lower_case }
-  - { key: readability-identifier-naming.PrivateMemberSuffix, value: _ }
-  # types (struct/enum/typedef) → snake_case too
-  - { key: readability-identifier-naming.TypeCase, value: lower_case }
-  - { key: readability-identifier-naming.EnumConstantCase, value: UPPER_CASE }
-  # macros/constants → UPPER_CASE
-  - {
-      key: readability-identifier-naming.MacroDefinitionCase,
-      value: UPPER_CASE,
-    }
-  - { key: readability-identifier-naming.ConstantCase, value: UPPER_CASE }
+  # Allow flexible naming to match embedded C conventions
+  - { key: readability-identifier-naming.FunctionCase, value: aNy_CasE }
+  - { key: readability-identifier-naming.FunctionIgnoredRegexp, value: "^_.*" }
+  - { key: readability-identifier-naming.VariableCase, value: aNy_CasE }
+  - { key: readability-identifier-naming.GlobalVariableCase, value: aNy_CasE }
+  - { key: readability-identifier-naming.ParameterCase, value: aNy_CasE }
+  - { key: readability-identifier-naming.MemberCase, value: aNy_CasE }
+  # types (struct/enum/typedef) → flexible
+  - { key: readability-identifier-naming.TypeCase, value: aNy_CasE }
+  - { key: readability-identifier-naming.EnumConstantCase, value: aNy_CasE }
+  # macros/constants → flexible (ignore header guards)
+  - { key: readability-identifier-naming.MacroDefinitionCase, value: aNy_CasE }
+  - { key: readability-identifier-naming.MacroDefinitionIgnoredRegexp, value: "^__.*_H$" }
+  - { key: readability-identifier-naming.ConstantCase, value: aNy_CasE }

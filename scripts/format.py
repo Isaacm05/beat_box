@@ -46,12 +46,12 @@ def main():
     print(f"Formatting {len(files)} files...")
     try:
         subprocess.run(["clang-format", "-i"] + files, check=True)
-        print("✅ All files formatted successfully.")
+        print("[SUCCESS] All files formatted successfully.")
     except FileNotFoundError:
-        print("❌ clang-format not found. See installation instructions above.")
+        print("[ERROR] clang-format not found. See installation instructions above.")
         sys.exit(1)
     except subprocess.CalledProcessError:
-        print("❌ clang-format failed on some files.")
+        print("[ERROR] clang-format failed on some files.")
         sys.exit(1)
 
 

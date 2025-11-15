@@ -5,7 +5,7 @@
 #include "lcd.h"
 #include "pico/stdlib.h"
 
-void setup_lcd();      // SPI + LCD init
+void setup_lcd();     // SPI + LCD init
 void setup_spi_lcd(); // exposed separately if needed
 
 #endif
