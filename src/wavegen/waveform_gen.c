@@ -1,8 +1,8 @@
 #include "waveform_gen.h"
+#include "pwm_audio.h" 
 #include <math.h>
 #include <stdlib.h>
 
-#define SAMPLE_RATE 44100.0f
 #define PI 3.14159265f
 
 #ifndef M_PI

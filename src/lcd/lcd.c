@@ -1016,7 +1016,7 @@ void LCD_PlotWaveform(float* samples, int sample_count, int id, int freq, int am
                       int dc_offset) {
     int width = WIDTH - 11;   // screen width
     int height = HEIGHT - 60; // screen height , leave room for text at top
-    int cut_len = 22000;
+    int cut_len = 0;
     int buffer_count = sample_count - cut_len;
 
     float buffer[(int) (sample_count - cut_len)];

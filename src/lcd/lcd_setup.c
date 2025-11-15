@@ -22,7 +22,8 @@ void setup_spi_lcd() {
     gpio_set_function(PIN_SCK, GPIO_FUNC_SPI);
     gpio_set_function(PIN_SDI, GPIO_FUNC_SPI);
 
-    spi_init(spi1, 12000000);
+    // Increased from 12MHz to 40MHz for faster LCD refresh
+    spi_init(spi1, 40000000);
     spi_set_format(spi1, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 }
 

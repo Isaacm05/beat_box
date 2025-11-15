@@ -1,14 +1,21 @@
 #ifndef PWM_AUDIO_H
 #define PWM_AUDIO_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #define AUDIO_PIN 36
 #define PWM_WRAP 255
-#define PWM_DIV 1.0f // no clock divide
-#define SAMPLE_RATE 44100.0f
+#define PWM_DIV 1.0f
+
+#define SAMPLE_RATE 22050.0f
+#define MAX_SAMPLES 16384
 
 void pwm_audio_init(void);
 void pwm_play_buffer(const float* buffer, int len);
+void pwm_play_buffer_nonblocking(const float* buffer, int len);
+bool pwm_is_playing(void);
+
+extern uint16_t pwm_buf[MAX_SAMPLES];
 
 #endif
