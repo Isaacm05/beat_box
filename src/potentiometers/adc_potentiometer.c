@@ -71,7 +71,7 @@ void init_adc_dma() {
     }
 
     // 0x0F is 0b00001111, enabling channels 0-3
-    adc_set_round_robin(0x0F); // Enable channels 0-3 for round robin
+    adc_set_round_robin(0xF0); // Enable channels 0-3 for round robin
     adc_fifo_setup(true,       // Write each completed conversion to the FIFO
                    true,       // Enable DMA data request (DREQ)
                    POT_NUM,    // DREQ (and IRQ) asserted when at least POT_NUM samples present
@@ -148,13 +148,16 @@ void get_pots() {
     if (mode_flag) {
         // Map to parameters 4-7
         for (int i = 0; i < POT_NUM; i++) {
-            printf("Param %d: %f\n", i + POT_NUM, adc_buffer[i + POT_NUM]);
+            printf("Param %d: %f ", i + POT_NUM, adc_buffer[i + POT_NUM]);
+
         }
+        printf("\n");
     } else {
         // Map to parameters 0-3
         for (int i = 0; i < POT_NUM; i++) {
-            printf("Param %d: %f\n", i, adc_buffer[i]);
+            printf("Param %d: %f ", i, adc_buffer[i]);
         }
+        printf("\n");
     }
 }
 
