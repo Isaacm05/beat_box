@@ -1,13 +1,11 @@
-// arduino_compat.h
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "hardware/irq.h"
 #include "hardware/timer.h"
-
-// had to add pico extensionon vs code
 
 // If not compiling in an Arduino environment, define minimal ARDUINO macros
 #ifndef ARDUINO
@@ -21,7 +19,7 @@
 #define INPUT_PULLUP 2
 #endif
 
-static inline void pinMode(uint pin, int mode) {
+static inline void pinMode(uint8_t pin, int mode) {
     if (mode == OUTPUT) {
         gpio_set_dir(pin, GPIO_OUT);
     } else {
@@ -35,11 +33,11 @@ static inline void pinMode(uint pin, int mode) {
     }
 }
 
-static inline void digitalWrite(uint pin, int val) {
+static inline void digitalWrite(uint8_t pin, int val) {
     gpio_put(pin, val ? 1 : 0);
 }
 
-static inline int digitalRead(uint pin) {
+static inline int digitalRead(uint8_t pin) {
     return gpio_get(pin);
 }
 
@@ -64,10 +62,6 @@ static inline void delay(uint32_t ms) {
 
 // Attach/detach IRQ wrapper (if you need them)
 static inline void attach_timer_irq(int irq, void (*handler)(void), bool enable) {
-    // Not used directly; Protomatter uses irq_set_exclusive_handler etc directly.
-    // Keep this for compatibility if some code calls it.
-    irq_set_exclusive_handler(irq, (void (*)(void))handler);
+    irq_set_exclusive_handler(irq, handler);
     if (enable) irq_set_enabled(irq, true);
 }
-
-#endif // arduino_compat.h

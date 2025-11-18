@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
-#include "Adafruit_Protomatter.h"    // The Protomatter core and rp2040 backend header
+#include "Adafruit_Protomatter.h"   // The Protomatter core and rp2040 backend header
 
 // Include arduino_compat.h if not included in rp2040.h already
 // #include "arduino_compat.h" 
