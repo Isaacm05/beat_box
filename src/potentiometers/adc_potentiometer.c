@@ -79,6 +79,8 @@ void init_adc_dma() {
                    false       // No 8-bit mode
     );
 
+    adc_select_input(4);
+
     adc_run(true); // Start ADC conversions
 
     int dma_chan = 0;
@@ -149,7 +151,6 @@ void get_pots() {
         // Map to parameters 4-7
         for (int i = 0; i < POT_NUM; i++) {
             printf("Param %d: %f ", i + POT_NUM, adc_buffer[i + POT_NUM]);
-
         }
         printf("\n");
     } else {
