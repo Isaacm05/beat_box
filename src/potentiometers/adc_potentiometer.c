@@ -66,33 +66,36 @@ void init_button() {
 void init_adc_dma() {
     adc_init();
 
-    for (int i = 0; i < POT_NUM; i++) {
-        adc_gpio_init(POT_PIN + i);
+    for (int i = POT_PIN; i <= POT_NUM; i++) {
+        adc_gpio_init(i);
     }
 
     // 0x0F is 0b00001111, enabling channels 0-3
     adc_set_round_robin(0xF0); // Enable channels 0-3 for round robin
-    adc_fifo_setup(true,       // Write each completed conversion to the FIFO
-                   true,       // Enable DMA data request (DREQ)
-                   POT_NUM,    // DREQ (and IRQ) asserted when at least POT_NUM samples present
-                   false,      // No ERR bit
-                   false       // No 8-bit mode
-    );
 
     adc_select_input(4);
 
     adc_run(true); // Start ADC conversions
 
-    int dma_chan = 0;
+    int dma_chan = dma_claim_unused_channel(true);
     dma_hw->ch[dma_chan].transfer_count = (1u << 28) | POT_NUM;
     dma_hw->ch[dma_chan].read_addr = &adc_hw->fifo;
-    dma_hw->ch[dma_chan].write_addr = raw_adc_buffer;
+    dma_hw->ch[dma_chan].write_addr = &raw_adc_buffer;
 
     uint32_t temp = 0;
     temp |= (1u << 2);
     temp |= (DREQ_ADC << 17);
     temp |= (1u << 0);
     dma_hw->ch[dma_chan].ctrl_trig = temp;
+
+    adc_fifo_setup(true,    // Write each completed conversion to the FIFO
+                   true,    // Enable DMA data request (DREQ)
+                   POT_NUM, // DREQ (and IRQ) asserted when at least POT_NUM samples present
+                   false,   // No ERR bit
+                   false    // No 8-bit mode
+    );
+
+    dma_channel_start(dma_chan);
 }
 
 /*Current thoughts on design, first must test to see if will work on board.
@@ -135,7 +138,7 @@ void check_pots() {
         float param_val = adc_buffer[idx];
 
         if (!pot_engaged[i]) {
-            if (fabs(pot_val - param_val) <= 0.02) {
+            if (fabs(pot_val - param_val) <= 0.1) {
                 pot_engaged[i] = true;
             } else {
                 continue;
@@ -150,13 +153,13 @@ void get_pots() {
     if (mode_flag) {
         // Map to parameters 4-7
         for (int i = 0; i < POT_NUM; i++) {
-            printf("Param %d: %f ", i + POT_NUM, adc_buffer[i + POT_NUM]);
+            printf("Param %d: %d ", i + POT_NUM, raw_adc_buffer[i + POT_NUM]);
         }
         printf("\n");
     } else {
         // Map to parameters 0-3
         for (int i = 0; i < POT_NUM; i++) {
-            printf("Param %d: %f ", i, adc_buffer[i]);
+            printf("Param %d: %d ", i, raw_adc_buffer[i]);
         }
         printf("\n");
     }
