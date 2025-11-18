@@ -29,10 +29,10 @@
 #if defined(ARDUINO_ARCH_RP2040) || defined(PICO_BOARD) ||                     \
     defined(__RP2040__) || defined(__RP2350__)
 
-#include "hardware/pwm.h"
+#include "../../hardware_pwm/include/hardware/pwm.h"
 #include "hardware/irq.h"
 #include "hardware/timer.h"
-#include "pico/stdlib.h" // For sio_hw, etc
+#include "pico/stdlib.h" // For sio_hw, etc.
 
 // RP2040 only allows full 32-bit aligned writes to GPIO.
 #define _PM_STRICT_32BIT_IO ///< Change core.c behavior for long accesses only
@@ -103,7 +103,7 @@ void _PM_timerInit(Protomatter_core *core) {
 #endif
 }
 
-#elif defined(CIRCUITPY) || defined (PROTOMATTER_PICO_SDK) // COMPILING FOR CIRCUITPYTHON --------------------
+#elif defined(CIRCUITPY) // COMPILING FOR CIRCUITPYTHON --------------------
 
 #if !defined(F_CPU) // Not sure if CircuitPython build defines this
 #ifdef __RP2040__

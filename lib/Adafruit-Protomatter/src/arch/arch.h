@@ -187,8 +187,19 @@ _PM_CUSTOM_BLAST             If defined, instructs core code to not compile
 // ARCHITECTURE-SPECIFIC HEADERS -------------------------------------------
 
 // clang-format off
+#include "esp32-common.h"
+#include "esp32.h" // Original ESP32
+#include "esp32-s2.h"
+#include "esp32-s3.h"
+#include "esp32-c3.h"
+#include "esp32-c6.h"
+#include "nrf52.h"
 #include "rp2040.h"
-
+#include "samd-common.h"
+#include "samd21.h"
+#include "samd51.h"
+#include "stm32.h"
+#include "teensy4.h"
 // clang-format on
 
 // DEFAULTS IF NOT DEFINED ABOVE -------------------------------------------
