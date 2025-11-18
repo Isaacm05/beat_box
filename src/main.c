@@ -2,7 +2,6 @@
 #include "hardware/pwm.h"
 #include "lcd/lcd.h"
 #include "lcd/lcd_setup.h"
-#include "lcd/lcd_waveform_fast.h"
 #include "pico/stdlib.h"
 #include "potentiometers/adc_potentiometer.h"
 #include "wavegen/presets.h"
