@@ -7,6 +7,8 @@
 #include "hardware/irq.h"
 #include "hardware/timer.h"
 
+// had to add pico extensionon vs code
+
 // If not compiling in an Arduino environment, define minimal ARDUINO macros
 #ifndef ARDUINO
 #define ARDUINO 1

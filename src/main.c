@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
-#include "protomatter.h"    // The Protomatter core and rp2040 backend header
+#include "Adafruit_Protomatter.h"    // The Protomatter core and rp2040 backend header
 
 // Include arduino_compat.h if not included in rp2040.h already
 // #include "arduino_compat.h" 
@@ -14,31 +14,33 @@
 // These pins must match your wiring to the panel
 // Pins must be GPIO numbers as per Pico SDK
 
-static const uint8_t R1_pin = 2;
-static const uint8_t G1_pin = 3;
-static const uint8_t B1_pin = 4;
-static const uint8_t R2_pin = 5;
+static const uint8_t R1_pin = 1;
+static const uint8_t G1_pin = 2;
+static const uint8_t B1_pin = 3;
+static const uint8_t R2_pin = 4;
 static const uint8_t G2_pin = 6;
 static const uint8_t B2_pin = 7;
-static const uint8_t A_pin  = 8;
-static const uint8_t B_pin  = 9;
-static const uint8_t C_pin  = 10;
-static const uint8_t D_pin  = 11;
-static const uint8_t LAT_pin = 12;
-static const uint8_t OE_pin  = 13;
-static const uint8_t CLK_pin = 14;
+static const uint8_t A_pin  = 12;
+static const uint8_t B_pin  = 13;
+static const uint8_t C_pin  = 14;
+static const uint8_t D_pin  = 16;
+static const uint8_t E_pin  = 17;
+static const uint8_t LAT_pin = 11;
+static const uint8_t OE_pin  = 8;
+static const uint8_t CLK_pin = 9;
 
 // Declare the pins array for Protomatter:
 // The order is important and depends on your panel and Protomatter expectations.
 // Protomatter expects 16 pins:
 // R1,G1,B1,R2,G2,B2,A,B,C,D,LAT,OE,CLK, and 3 more unused pins (set to 255 if unused)
+// this one uses an E pin because its 64x64
 
 static const uint8_t pins[] = {
     R1_pin, G1_pin, B1_pin,
     R2_pin, G2_pin, B2_pin,
-    A_pin, B_pin, C_pin, D_pin,
+    A_pin, B_pin, C_pin, D_pin, E_pin,
     LAT_pin, OE_pin, CLK_pin,
-    255, 255, 255 // Unused pins
+    255, 255 // Unused pins
 };
 
 // Declare the Protomatter core struct globally
