@@ -112,6 +112,13 @@ int main() {
         pot_buff[idx] = raw_adc_val;
         printf("Param %d: %d\n", idx, pot_buff[idx]);
 
+        printf("\n");
+
+        /* If wanted to print all params each time to see if being stored properly
+        printf("Param 0: %d, Param 1: %d, Param 2: %d, Param 3: %d, Param 4: %d, Param 5: %d, Param 6: %d, Param 7: %d\n",
+               pot_buff[0], pot_buff[1], pot_buff[2], pot_buff[3],
+               pot_buff[4], pot_buff[5], pot_buff[6], pot_buff[7]);
+        */
         sleep_ms(500); // Adjust as needed
     }
     return 0;
