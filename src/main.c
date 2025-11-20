@@ -2,42 +2,55 @@
 #include "hardware/gpio.h"
 #include <stdio.h>
 
-// --- Matrix Pins ---
-#define PIN_R1  4
-#define PIN_G1  5
+// =========================================================
+// FINAL PIN MAPPING (YOUR NEW CONNECTIONS)
+// =========================================================
+
+// --- TOP Row RGB ---
+#define PIN_G1  4
+#define PIN_R1  5
 #define PIN_B1  6
-#define PIN_R2  7
-#define PIN_G2  8
+
+// --- BOTTOM Row RGB ---
+#define PIN_G2  7
+#define PIN_R2  8
 #define PIN_B2  9
 
-#define PIN_OE  10
-#define PIN_CLK 11
-#define PIN_LAT 12
+// --- Address Lines ---
+#define PIN_A   10
+#define PIN_B   11
+#define PIN_C   12
+#define PIN_D   13
+#define PIN_E   14
 
-#define PIN_A   13
-#define PIN_B   14
-#define PIN_C   15
-#define PIN_D   16
-#define PIN_E   17
+// --- Control Pins ---
+#define PIN_LAT 15
+#define PIN_CLK 16
+#define PIN_OE  17
 
-#define WIDTH   64
-#define ROWS    64
-#define ROW_PAIRS 32
+// =========================================================
 
-// Simple RGB structure
+#define WIDTH       64
+#define HEIGHT      64
+#define ROW_PAIRS   32
+
+// Simple RGB pixel
 typedef struct {
     uint8_t r, g, b;
 } Pixel;
 
-// Framebuffer: 64x64 RGB pixels
-Pixel fb[ROWS][WIDTH];
+// Framebuffer
+Pixel fb[HEIGHT][WIDTH];
 
+// ---------------------------------------------------------
+// INITIALIZE PINS
+// ---------------------------------------------------------
 void matrix_gpio_init() {
     int pins[] = {
         PIN_R1, PIN_G1, PIN_B1,
         PIN_R2, PIN_G2, PIN_B2,
-        PIN_OE, PIN_CLK, PIN_LAT,
-        PIN_A, PIN_B, PIN_C, PIN_D, PIN_E
+        PIN_A, PIN_B, PIN_C, PIN_D, PIN_E,
+        PIN_LAT, PIN_CLK, PIN_OE
     };
 
     for (int i = 0; i < (int)(sizeof(pins)/sizeof(pins[0])); i++) {
@@ -45,10 +58,14 @@ void matrix_gpio_init() {
         gpio_set_dir(pins[i], GPIO_OUT);
         gpio_put(pins[i], 0);
     }
-    gpio_put(PIN_OE, 1);
+
+    gpio_put(PIN_OE, 1);  // OE is active LOW → start OFF
 }
 
-void set_row(int row) {
+// ---------------------------------------------------------
+// SET ROW ADDRESS LINES
+// ---------------------------------------------------------
+void set_row_address(uint8_t row) {
     gpio_put(PIN_A, (row >> 0) & 1);
     gpio_put(PIN_B, (row >> 1) & 1);
     gpio_put(PIN_C, (row >> 2) & 1);
@@ -56,73 +73,98 @@ void set_row(int row) {
     gpio_put(PIN_E, (row >> 4) & 1);
 }
 
-void scan_rowpair(int rp) {
-    set_row(rp);
+// ---------------------------------------------------------
+// SCAN ONE ROW-PAIR
+// ---------------------------------------------------------
+void scan_rowpair(uint8_t rp) {
+    set_row_address(rp);
 
+    // Disable output while shifting
     gpio_put(PIN_OE, 1);
-    gpio_put(PIN_LAT, 0);
 
     for (int x = 0; x < WIDTH; x++) {
         Pixel top = fb[rp][x];
         Pixel bot = fb[rp + ROW_PAIRS][x];
 
+        // Output TOP row RGB
         gpio_put(PIN_R1, top.r > 0);
         gpio_put(PIN_G1, top.g > 0);
         gpio_put(PIN_B1, top.b > 0);
 
+        // Output BOTTOM row RGB
         gpio_put(PIN_R2, bot.r > 0);
         gpio_put(PIN_G2, bot.g > 0);
         gpio_put(PIN_B2, bot.b > 0);
 
+        // CLOCK (safe rising edge)
         gpio_put(PIN_CLK, 1);
         asm volatile("nop; nop; nop;");
         gpio_put(PIN_CLK, 0);
     }
 
+    // Some panels require an extra dummy column
+    gpio_put(PIN_CLK, 1);
+    gpio_put(PIN_CLK, 0);
+
+    // Latch delayed (important for most HUB75E panels)
+    sleep_us(1);
     gpio_put(PIN_LAT, 1);
-    asm volatile("nop");
+    sleep_us(1);
     gpio_put(PIN_LAT, 0);
 
+    // Turn row ON briefly
     gpio_put(PIN_OE, 0);
-    sleep_us(150);
+    sleep_us(150);   // brightness / refresh control
     gpio_put(PIN_OE, 1);
 }
 
-void fill_color(uint8_t r, uint8_t g, uint8_t b) {
-    for (int y = 0; y < ROWS; y++)
+// ---------------------------------------------------------
+// CLEAR FRAMEBUFFER
+// ---------------------------------------------------------
+void clear_fb() {
+    for (int y = 0; y < HEIGHT; y++)
         for (int x = 0; x < WIDTH; x++)
-            fb[y][x].r = r, fb[y][x].g = g, fb[y][x].b = b;
+            fb[y][x] = (Pixel){0,0,0};
 }
 
+// ---------------------------------------------------------
+// DRAW MOVING VERTICAL LINE
+// ---------------------------------------------------------
+void draw_line(int xpos) {
+    clear_fb();
+
+    if (xpos < 0 || xpos >= WIDTH) return;
+
+    for (int y = 0; y < HEIGHT; y++) {
+        fb[y][xpos].r = 255;
+        fb[y][xpos].g = 255;
+        fb[y][xpos].b = 255;   // white vertical line
+    }
+}
+
+// ---------------------------------------------------------
+// MAIN
+// ---------------------------------------------------------
 int main() {
     stdio_init_all();
-    sleep_ms(1500);
+    sleep_ms(1000);
+    printf("=== MOVING LINE TEST START ===\n");
 
-    printf("=== MATRIX FRAMEBUFFER TEST START ===\n");
     matrix_gpio_init();
 
-    // Start with red
-    fill_color(255, 0, 0);
-    sleep_ms(500);
+    int xpos = 0;
 
-    // Then green
-    fill_color(0, 255, 0);
-    sleep_ms(500);
+    while (1) {
+        draw_line(xpos);
 
-    // Then blue
-    fill_color(0, 0, 255);
-    sleep_ms(500);
+        // Scan whole frame several times for persistence
+        for (int i = 0; i < 200; i++) {
+            for (int rp = 0; rp < ROW_PAIRS; rp++) {
+                scan_rowpair(rp);
+            }
+        }
 
-    // Cycle RGB forever
-    while (true) {
-        fill_color(255, 0, 0);
-        for (int i = 0; i < 300; i++) for (int rp = 0; rp < ROW_PAIRS; rp++) scan_rowpair(rp);
-
-        fill_color(0, 255, 0);
-        for (int i = 0; i < 300; i++) for (int rp = 0; rp < ROW_PAIRS; rp++) scan_rowpair(rp);
-
-        fill_color(0, 0, 255);
-        for (int i = 0; i < 300; i++) for (int rp = 0; rp < ROW_PAIRS; rp++) scan_rowpair(rp);
+        xpos = (xpos + 1) % WIDTH;
     }
 
     return 0;
