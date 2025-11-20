@@ -90,7 +90,8 @@ typedef struct {
 } Picture;
 
 void LCD_DrawPicture(u16 x0, u16 y0, const Picture* pic);
-void LCD_PrintWaveMenu(int id, int freq, int amp, int decay, int dc_offset, int pitch_decay, int noise_mix, int env_curve, int comp_amount, int select);
-void LCD_PlotWaveform(float* samples, int sample_count);
+void LCD_PrintWaveMenu(int id, int freq, int amp, int decay, int dc_offset, int pitch_decay,
+                       int noise_mix, int env_curve, int comp_amount, int select);
+void LCD_PlotWaveform(uint16_t* samples, int sample_count);
 
 #endif

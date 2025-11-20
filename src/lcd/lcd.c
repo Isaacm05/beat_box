@@ -1061,7 +1061,7 @@ void LCD_PrintWaveMenu(int id, int freq, int amp, int decay, int dc_offset, int 
     LCD_DrawString(215, 11, COLOR_BLACK, COLOR_BLACK, id_str, 16, 1, 1);
 }
 
-void LCD_PlotWaveform(float* samples, int sample_count) {
+void LCD_PlotWaveform(uint16_t* samples, int sample_count) {
 
     int width = WIDTH - 11;   // screen width
     int height = HEIGHT - 70; // screen height , leave room for text at top
@@ -1087,6 +1087,7 @@ void LCD_PlotWaveform(float* samples, int sample_count) {
             int idx = x * new_res + i;
             if (idx >= buffer_count)
                 break;
+            float val = (buffer[idx] / 127.5f) - 1.0f;
             sum += buffer[idx];
         }
         float avg = sum / new_res;
