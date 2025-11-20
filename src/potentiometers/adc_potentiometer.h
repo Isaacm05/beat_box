@@ -42,6 +42,7 @@ static const struct {
 
 extern volatile uint32_t raw_adc_val;
 extern volatile int idx;            // Right = ++/direc = true, Left = --/direc = false
+extern volatile bool update_lcd_params;
 extern bool pot_engaged[PARAM_NUM]; // Track if pot is engaged for each parameter
 extern WaveParams* current_params;  // Pointer to current WaveParams being controlled
 
