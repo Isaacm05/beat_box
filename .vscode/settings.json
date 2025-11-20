@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "adafruit_protomatter.h": "c"
+        "adafruit_protomatter.h": "c",
+        "cstring": "c"
     }
 }

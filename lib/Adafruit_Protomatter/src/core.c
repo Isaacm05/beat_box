@@ -30,6 +30,7 @@
 // likely with one's own code.
 
 #include "core.h"      // enums and structs
+#include "rp2040.h"
 #include "arch/arch.h" // Do NOT include this in any other source files
 #include <stddef.h>
 #include <stdlib.h>
