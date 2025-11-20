@@ -1012,12 +1012,64 @@ void LCD_DrawPicture(u16 x0, u16 y0, const Picture* pic) {
     lcddev.select(0);
 }
 
-void LCD_PlotWaveform(float* samples, int sample_count, int id, int freq, int amp, int decay,
-                      int dc_offset) {
+void LCD_PrintWaveMenu(int id, int freq, int amp, int decay, int dc_offset, int pitch_decay, int noise_mix, int env_curve, int comp_amount, int select)
+{
+    LCD_DrawFillRectangle(170, 9, 235, 215, COLOR_WHITE);
+
+    // characteristics string
+    char settings_str[100];
+    char settings_str_2[100];
+
+    if (select)
+    {
+        sprintf(settings_str, "Freq: %d | Amp: %d", freq, amp);
+        sprintf(settings_str_2, "Dec: %d | Off: %d", decay, dc_offset);
+        LCD_DrawString(195, 11, COLOR_BLACK, COLOR_BLACK, settings_str, 16, 1, 1);
+        LCD_DrawString(175, 11, COLOR_BLACK, COLOR_BLACK, settings_str_2, 16, 1, 1);
+    }
+    else
+    {
+        sprintf(settings_str, "Pitch: %d | Noise: %d", freq, noise_mix);
+        sprintf(settings_str_2, "Env: %d | Comp: %d", env_curve, comp_amount);
+        LCD_DrawString(195, 11, COLOR_BLACK, COLOR_BLACK, settings_str, 16, 1, 1);
+        LCD_DrawString(175, 11, COLOR_BLACK, COLOR_BLACK, settings_str_2, 16, 1, 1);
+    }
+
+
+    char type[20];
+
+    switch (id) {
+        case 0:
+            strcpy(type, "sine");
+            break;
+        case 1:
+            strcpy(type, "square");
+            break;
+        case 2:
+            strcpy(type, "triangle");
+            break;
+        case 3:
+            strcpy(type, "saw");
+            break;
+        case 4:
+            strcpy(type, "noise");
+            break;
+    }
+
+    char id_str[40];
+    sprintf(id_str, "Signal ID: %s", type);
+    LCD_DrawString(215, 11, COLOR_BLACK, COLOR_BLACK, id_str, 16, 1, 1);
+}
+
+void LCD_PlotWaveform(float* samples, int sample_count) {
+
     int width = WIDTH - 11;   // screen width
-    int height = HEIGHT - 60; // screen height , leave room for text at top
-    int cut_len = 0;
+    int height = HEIGHT - 70; // screen height , leave room for text at top
+    int cut_len = 8000;
     int buffer_count = sample_count - cut_len;
+
+    // Clear screen 
+    LCD_DrawFillRectangle(0, 11, height, width, COLOR_BLACK);
 
     float buffer[(int) (sample_count - cut_len)];
     memcpy(buffer, samples, (sample_count - cut_len - 1) * sizeof(int));
@@ -1027,39 +1079,6 @@ void LCD_PlotWaveform(float* samples, int sample_count, int id, int freq, int am
     // Previous point
     int prev_y = (height / 2);
     int prev_x = 11;
-
-    LCD_DrawFillRectangle(170, 9, 235, 215, COLOR_WHITE);
-
-    // characteristics string
-    char settings_str[100];
-    char settings_str_2[100];
-    sprintf(settings_str, "Freq: %d | Amp: %d", freq, amp);
-    sprintf(settings_str_2, "Dec: %d | Off: %d", decay, dc_offset);
-    LCD_DrawString(195, 11, COLOR_BLACK, COLOR_BLACK, settings_str, 16, 1, 1);
-    LCD_DrawString(175, 11, COLOR_BLACK, COLOR_BLACK, settings_str_2, 16, 1, 1);
-
-    char type[20];
-
-    switch (id) {
-    case 0:
-        strcpy(type, "sine");
-        break;
-    case 1:
-        strcpy(type, "square");
-        break;
-    case 2:
-        strcpy(type, "triangle");
-        break;
-    case 3:
-        strcpy(type, "saw");
-        break;
-    case 4:
-        strcpy(type, "noise");
-        break;
-    }
-    char id_str[40];
-    sprintf(id_str, "Signal ID: %s", type);
-    LCD_DrawString(215, 11, COLOR_BLACK, COLOR_BLACK, id_str, 16, 1, 1);
 
     for (int x = 11; x < width; x++) { // bottom to top
         // Average

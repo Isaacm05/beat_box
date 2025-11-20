@@ -111,9 +111,13 @@ int main() {
     // Generate and display initial waveform
     waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
     waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer);
-    LCD_PlotWaveform(lcd_buf, MAX_SAMPLES, adc_buffer.waveform_id, (int) adc_buffer.frequency,
-                     (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
-                     (int) (adc_buffer.offset_dc * 100));
+    int select;
+    if (idx <= 3){select = 1;}
+    else if (idx <= 7){select = 0;}
+    LCD_PrintWaveMenu(adc_buffer.waveform_id, (int) adc_buffer.frequency, (int) (adc_buffer.amplitude * 100),
+                             (int) (adc_buffer.decay * 100), (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
+                            (int)(adc_buffer.noise_mix * 100), (int)(adc_buffer.env_curve * 100), (int)(adc_buffer.comp_amount * 100), select);
+    LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
 
     for (;;) {
         uint32_t current_time = to_ms_since_boot(get_absolute_time());
@@ -127,11 +131,14 @@ int main() {
             waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer); // Generate float version for
 
             // Redraw LCD display
+            if (idx <= 3){select = 1;}
+            else if (idx <= 7){select = 0;}
             // LCD_DrawFillRectangle(11, 60, 319, 239, BLACK);
-            LCD_Clear(0x0000);
-            LCD_PlotWaveform(lcd_buf, MAX_SAMPLES, adc_buffer.waveform_id,
-                             (int) adc_buffer.frequency, (int) (adc_buffer.amplitude * 100),
-                             (int) (adc_buffer.decay * 100), (int) (adc_buffer.offset_dc * 100));
+            LCD_PrintWaveMenu(adc_buffer.waveform_id, (int) adc_buffer.frequency, (int) (adc_buffer.amplitude * 100),
+                             (int) (adc_buffer.decay * 100), (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
+                            (int)(adc_buffer.noise_mix * 100), (int)(adc_buffer.env_curve * 100), (int)(adc_buffer.comp_amount * 100), select);
+
+            LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
 
             params_changed = true;
             last_edit_time = current_time;
@@ -155,7 +162,7 @@ int main() {
 
         // only sleep if nothing happened
         if (!params_updated) {
-            sleep_ms(50); // 20 hz
+            sleep_ms(10); // 20 hz
         }
     }
 }
