@@ -92,31 +92,25 @@ int main() {
     pwm_audio_init();
     setup_lcd();
 
-    // Initialize adc_buffer with default values
-    // adc_buffer = (WaveParams) {.frequency = 440.0f,
-    //                            .amplitude = 0.5f,
-    //                            .decay = 0.9f,
-    //                            .waveform_id = 0,
-    //                            .offset_dc = 0.0f,
-    //                            .pitch_decay = 0.0f,
-    //                            .noise_mix = 0.0f,
-    //                            .env_curve = 5.0f,
-    //                            .comp_amount = 0.0f};
+    adc_buffer = drum_presets[0];
 
-    adc_buffer = drum_presets[4]; // Start with first preset
-
-    // Set the global pointer to our params
+    // Set the global pointer to our params (this is for later when we have 8 params)
     set_current_params(&adc_buffer);
 
     // Generate and display initial waveform
     waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
     waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer);
     int select;
-    if (idx <= 3){select = 1;}
-    else if (idx <= 7){select = 0;}
-    LCD_PrintWaveMenu(adc_buffer.waveform_id, (int) adc_buffer.frequency, (int) (adc_buffer.amplitude * 100),
-                             (int) (adc_buffer.decay * 100), (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
-                            (int)(adc_buffer.noise_mix * 100), (int)(adc_buffer.env_curve * 100), (int)(adc_buffer.comp_amount * 100), select);
+    if (idx <= 3) {
+        select = 1;
+    } else if (idx <= 7) {
+        select = 0;
+    }
+    LCD_PrintWaveMenu(adc_buffer.waveform_id, (int) adc_buffer.frequency,
+                      (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
+                      (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
+                      (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
+                      (int) (adc_buffer.comp_amount * 100), select);
     LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
 
     for (;;) {
@@ -124,14 +118,20 @@ int main() {
 
         // Update potentiometer values - returns true if params changed
         bool params_updated = update_pots(&adc_buffer);
-        if (update_lcd_params)
-        {       
+
+        if (update_lcd_params) {
             update_lcd_params = false;
-            if (idx <= 3){select = 1;}
-            else if (idx <= 7){select = 0;}
-            LCD_PrintWaveMenu(adc_buffer.waveform_id, (int) adc_buffer.frequency, (int) (adc_buffer.amplitude * 100),
-            (int) (adc_buffer.decay * 100), (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
-            (int)(adc_buffer.noise_mix * 100), (int)(adc_buffer.env_curve * 100), (int)(adc_buffer.comp_amount * 100), select);
+            if (idx <= 3) {
+                select = 1;
+            } else if (idx <= 7) {
+                select = 0;
+            }
+            LCD_PrintWaveMenu(
+                adc_buffer.waveform_id, (int) adc_buffer.frequency,
+                (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
+                (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
+                (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
+                (int) (adc_buffer.comp_amount * 100), select);
         }
         if (params_updated) {
             // Regenerate waveform with new parameters
@@ -141,32 +141,31 @@ int main() {
             // Redraw LCD display
 
             // LCD_DrawFillRectangle(11, 60, 319, 239, BLACK);
-          
-            if (idx <= 3){select = 1;}
-            else if (idx <= 7){select = 0;}
+
+            if (idx <= 3) {
+                select = 1;
+            } else if (idx <= 7) {
+                select = 0;
+            }
             LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
-            LCD_PrintWaveMenu(adc_buffer.waveform_id, (int) adc_buffer.frequency, (int) (adc_buffer.amplitude * 100),
-            (int) (adc_buffer.decay * 100), (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
-            (int)(adc_buffer.noise_mix * 100), (int)(adc_buffer.env_curve * 100), (int)(adc_buffer.comp_amount * 100), select);
+            LCD_PrintWaveMenu(
+                adc_buffer.waveform_id, (int) adc_buffer.frequency,
+                (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
+                (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
+                (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
+                (int) (adc_buffer.comp_amount * 100), select);
 
             params_changed = true;
             last_edit_time = current_time;
-
-            // Uncomment for debugging:
-            printf("Updated: freq=%.1fHz, amp=%.2f, decay=%.2fs\n", adc_buffer.frequency,
-                   adc_buffer.amplitude, adc_buffer.decay);
         }
 
-        // Check if editing has stopped (timeout reached) - ONLY trigger audio playback
         if (params_changed && (current_time - last_edit_time) >= EDIT_TIMEOUT_MS) {
-            // User stopped editing - play the waveform
             printf("Playing waveform...\n");
 
-            // Play PWM buffer directly - no conversion needed!
             pwm_play_pwm_nonblocking(pwm_buf, MAX_SAMPLES);
 
             params_changed = false; // Reset change flag
-            printf("Playback started. Ready for next edit.\n");
+            
         }
 
         // only sleep if nothing happened

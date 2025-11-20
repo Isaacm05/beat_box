@@ -189,13 +189,11 @@ int waveform_generate_pwm(uint16_t* pwm_buffer, int max_samples, WaveParams* p) 
         float env = use_env_cache ? envelope_cache[i] : 1.0f;
         val = amp * env * val + dc_offset;
 
-        // Clamp and convert to PWM in one step
         if (val > 1.0f)
             val = 1.0f;
         else if (val < -1.0f)
             val = -1.0f;
 
-        // Convert directly to PWM value (0-255)
         pwm_buffer[i] = (uint16_t)((val + 1.0f) * 127.5f);
     }
 
