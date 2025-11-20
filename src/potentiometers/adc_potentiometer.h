@@ -21,7 +21,7 @@ static const struct {
     float threshold;        // Change threshold for LCD update
     uint8_t is_exponential; // 1 if exponential scaling, 0 if linear
 } param_config[8] = {
-    {offsetof(WaveParams, frequency), 20.0f, 9000.0f, 10.0f, 0}, // 0: Frequency
+    {offsetof(WaveParams, frequency), 20.0f, 9000.0f, 75.0f, 1}, // 0: Frequency
     {offsetof(WaveParams, amplitude), 0.0f, 1.0f, 0.01f, 0},     // 1: Amplitude
     {offsetof(WaveParams, decay), 0.0f, 2.0f, 0.01f, 0},         // 2: Decay
     {offsetof(WaveParams, offset_dc), 0.0f, 1.0f, 0.01f, 0},     // 3: DC Offset

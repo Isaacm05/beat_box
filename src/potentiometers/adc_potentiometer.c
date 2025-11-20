@@ -98,7 +98,7 @@ void init_adc_dma() {
 }
 
 bool update_pots(WaveParams* params) {
-    // Early exit for invalid index
+
     if (idx >= PARAM_NUM)
         return false;
 
@@ -106,17 +106,18 @@ bool update_pots(WaveParams* params) {
     const typeof(param_config[0])* cfg = &param_config[idx];
     float* param_ptr = (float*) ((uint8_t*) params + cfg->offset);
 
-    // Normalize current parameter value to 0.0-1.0
+    // Normalize
     float param_normalized;
     if (cfg->is_exponential) {
-        param_normalized = logf(*param_ptr + 1.0f) * 0.43429f; // 1/2.3026 = 0.43429
+        // Inverse of exponential scale
+        float ratio = cfg->max_val / cfg->min_val;
+        param_normalized = logf(*param_ptr / cfg->min_val) / logf(ratio);
     } else {
         param_normalized = (*param_ptr - cfg->min_val) / (cfg->max_val - cfg->min_val);
     }
 
-    // Check engagement (early exit if not engaged)
+    // Check engagement
     if (!pot_engaged[idx]) {
-        // Engage when pot value passes within threshold of current value
         if (fabsf(pot_val - param_normalized) <= POT_ENGAGE_THRESHOLD) {
             pot_engaged[idx] = true;
         } else {
@@ -127,12 +128,14 @@ bool update_pots(WaveParams* params) {
     // Calculate new parameter value
     float new_value;
     if (cfg->is_exponential) {
-        new_value = expf(pot_val * 2.3026f) - 1.0f;
+        // Exponential scaling
+        float ratio = cfg->max_val / cfg->min_val;
+        new_value = cfg->min_val * expf(pot_val * logf(ratio));
     } else {
         new_value = pot_val * (cfg->max_val - cfg->min_val) + cfg->min_val;
     }
 
-    // Check if value changed significantly (early exit if not)
+    // Check if value changed
     if (fabsf(new_value - *param_ptr) <= cfg->threshold) {
         return false;
     }

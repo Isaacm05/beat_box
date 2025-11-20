@@ -7,6 +7,7 @@
         "stdint.h": "c",
         "irq.h": "c",
         "adc_potentiometer.h": "c",
-        "lcd.h": "c"
+        "lcd.h": "c",
+        "presets.h": "c"
     }
 }

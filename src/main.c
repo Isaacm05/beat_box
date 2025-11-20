@@ -93,15 +93,17 @@ int main() {
     setup_lcd();
 
     // Initialize adc_buffer with default values
-    adc_buffer = (WaveParams) {.frequency = 440.0f,
-                               .amplitude = 0.5f,
-                               .decay = 0.9f,
-                               .waveform_id = 0,
-                               .offset_dc = 0.0f,
-                               .pitch_decay = 0.0f,
-                               .noise_mix = 0.0f,
-                               .env_curve = 5.0f,
-                               .comp_amount = 0.0f};
+    // adc_buffer = (WaveParams) {.frequency = 440.0f,
+    //                            .amplitude = 0.5f,
+    //                            .decay = 0.9f,
+    //                            .waveform_id = 0,
+    //                            .offset_dc = 0.0f,
+    //                            .pitch_decay = 0.0f,
+    //                            .noise_mix = 0.0f,
+    //                            .env_curve = 5.0f,
+    //                            .comp_amount = 0.0f};
+
+    adc_buffer = drum_presets[4]; // Start with first preset
 
     // Set the global pointer to our params
     set_current_params(&adc_buffer);
@@ -122,7 +124,7 @@ int main() {
         if (params_updated) {
             // Regenerate waveform with new parameters
             waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
-            waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer); // Generate float version for LCD
+            waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer); // Generate float version for
 
             // Redraw LCD display
             // LCD_DrawFillRectangle(11, 60, 319, 239, BLACK);
@@ -191,31 +193,31 @@ int main() {
 //         test_params.amplitude = 0.3f + (i * 0.015f);  // 0.3 to 0.9
 //         test_params.decay = 0.2f + (i * 0.02f);       // 0.2 to 1.0s
 
-//         printf("[%d/40] Freq: %.0f Hz, Amp: %.2f, Decay: %.2f s\n", i + 1,
-//                test_params.frequency,
+//         printf("[%d/40] Freq: %.0f Hz, Amp: %.2f, Decay: %.2f s\n", i + 1, test_params.frequency,
 //                test_params.amplitude, test_params.decay);
-//
+
 //         // Generate waveform
 //         uint32_t gen_start = to_ms_since_boot(get_absolute_time());
 //         waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &test_params);
 //         uint32_t gen_end = to_ms_since_boot(get_absolute_time());
-//
+
 //         // Display on LCD (optimized - only clear waveform area, not full screen)
 //         uint32_t lcd_start = to_ms_since_boot(get_absolute_time());
 //         // Only clear the waveform area instead of full screen (huge speedup!)
-//         LCD_DrawFillRectangle(11, 60, 319, 239, 0x0000);
-//         LCD_PlotWaveform(pwm_buf, MAX_SAMPLES, test_params.waveform_id,
-//                              (int) test_params.frequency, (int) (test_params.amplitude * 100),
-//                              (int) (test_params.decay * 100), (int) (test_params.offset_dc *
-//                              100));
+//         // LCD_DrawFillRectangle(11, 60, 319, 239, 0x0000);
+//         LCD_Clear(0x0000);
+//         LCD_PlotWaveform(pwm_buf, MAX_SAMPLES, test_params.waveform_id, (int)
+//         test_params.frequency,
+//                          (int) (test_params.amplitude * 100), (int) (test_params.decay * 100),
+//                          (int) (test_params.offset_dc * 100));
 //         uint32_t lcd_end = to_ms_since_boot(get_absolute_time());
-//
+
 //         printf("  Gen: %lu ms, LCD: %lu ms, Total: %lu ms\n", gen_end - gen_start,
 //                lcd_end - lcd_start, lcd_end - gen_start);
-//
+
 //         sleep_ms(50); // 20Hz update rate like pot version
 //     }
-//
+
 //     printf("\nAnimation complete! Final waveform displayed.\n");
 //     // Idle loop
 //     for (;;) {
