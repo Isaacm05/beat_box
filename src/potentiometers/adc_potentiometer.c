@@ -1,187 +1,168 @@
-// #include "adc_potentiometer.h"
-// #include <math.h>
-// #include <stdbool.h>
-// #include <stdio.h>
-// #include <stdlib.h>
+#include "adc_potentiometer.h"
+#include "hardware/adc.h"
+#include "hardware/dma.h"
+#include "hardware/gpio.h"
+#include "hardware/irq.h"
+#include <stddef.h>
 
-// // Global variable definitions
-// uint16_t raw_adc_buffer[PARAM_NUM];
-// float adc_buffer[PARAM_NUM] = {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f};
-// volatile bool mode_flag = false;
-// bool pot_engaged[4] = {false};
-// bool last_mode = false;
+// Define global variables
+volatile uint32_t raw_adc_val;
+volatile int idx = 0;
+bool pot_engaged[PARAM_NUM] = {false}; // Explicitly initialize all to false
+WaveParams* current_params;
 
-// /*
+// this is for when we have sets of params
+void set_current_params(WaveParams* params) {
+    current_params = params;
+}
 
-// Explaining thought process for the 4 pots and button switch up.
+void button_isr_left() {
 
-// Basically we have 8 parameters to control, but only 4 pots.
-// So we can use a button to switch between 2 different "modes"/"pages"(in the ui sense)
-// each mode/page will have 4 pots mapped to their own parameter.
+    uint32_t evmask = gpio_get_irq_event_mask(BUTTON_PIN_LEFT);
+    if (evmask) {
+        gpio_acknowledge_irq(BUTTON_PIN_LEFT, GPIO_IRQ_EDGE_RISE);
 
-// My thinking is that when the button is pressed, we toggle where the memory for each of these pots
-// goes to. My only issue would be, when switching modes, rather than remembering what was the previous
-// set value for the param, we would see the params jump to the current pot values, which were adjusted
-// for the earlier parameter.
+        // Toggle mode flag
+        idx--;
+        idx = (idx < 0) ? (PARAM_NUM - 1) : idx;
 
-// To read from the different modes, im thinking we have the button press toggle,
-// basically either send an interrupt to set a flag high or low, just toggle it for the 2 pages of
-// params we have I dont think we have 2 FIFO's for the DMA and I dont think there's a way to configure
-// it like that in hardware
+        // Mark new parameter as not engaged yet
+        pot_engaged[idx] = false;
+    }
+}
 
-// So somewhere I software I need to make it so the flag that is toggled by the button makes the pots
-// write to different arrays/banks.
+void button_isr_right() {
 
-// so like bank/array 0 would be for params 0-3
-// and bank/array 1 would be for params 4-7
+    uint32_t evmask = gpio_get_irq_event_mask(BUTTON_PIN_RIGHT);
+    if (evmask) {
+        gpio_acknowledge_irq(BUTTON_PIN_RIGHT, GPIO_IRQ_EDGE_RISE);
 
-// Going to check this w TA to see if it makes sense, if somebody is reviewing this
-// and has suggestions or comments please lmk
-// */
+        // Toggle mode flag
+        idx++;
+        idx = (idx >= PARAM_NUM) ? 0 : idx;
 
-// // ISR for button press, if acknowledged, toggle the mode/page flag
-// void button_isr() {
+        // Mark new parameter as not engaged yet
+        pot_engaged[idx] = false;
+    }
+}
 
-//     uint32_t evmask = gpio_get_irq_event_mask(BUTTON_PIN);
-//     if (evmask) {
-//         gpio_acknowledge_irq(BUTTON_PIN, GPIO_IRQ_EDGE_RISE);
+// P easy to see what this function does lol
+void init_button(int button_pin) {
+    gpio_init(button_pin);
+    gpio_set_dir(button_pin, GPIO_IN);
 
-//         // Toggle mode flag
-//         mode_flag = !mode_flag;
-//     }
-// }
+    uint32_t mask = 1u << button_pin;
 
-// // P easy to see what this function does lol
-// void init_button() {
-//     gpio_init(BUTTON_PIN);
-//     gpio_set_dir(BUTTON_PIN, GPIO_IN);
+    if (button_pin == BUTTON_PIN_LEFT) {
+        gpio_add_raw_irq_handler_masked(mask, button_isr_left);
+    } else {
+        gpio_add_raw_irq_handler_masked(mask, button_isr_right);
+    }
+    gpio_set_irq_enabled(button_pin, GPIO_IRQ_EDGE_RISE, true);
+    irq_set_enabled(IO_IRQ_BANK0, true);
+}
 
-//     uint32_t mask = 1u << BUTTON_PIN;
+void init_adc() {
+    // fill in
+    adc_gpio_init(POT_PIN);
+    adc_init();
+    adc_select_input(4);
+}
 
-//     gpio_add_raw_irq_handler_masked(mask, button_isr);
-//     gpio_set_irq_enabled(BUTTON_PIN, GPIO_IRQ_EDGE_RISE, true);
-//     irq_set_enabled(IO_IRQ_BANK0, true);
-// }
+void init_adc_freerun() {
+    // fill in
+    init_adc();
+    adc_run(true);
+}
 
-// void init_adc_dma() {
-//     adc_init();
+void init_dma() {
+    // fill in
+    int dma_chan = dma_claim_unused_channel(true);
+    dma_hw->ch[dma_chan].transfer_count = (1u << 28) | 1u;
 
-//     for (int i = POT_PIN; i <= POT_NUM; i++) {
-//         adc_gpio_init(i);
-//     }
+    uint32_t temp = 0;
+    temp |= (1u << 2);
+    temp |= (DREQ_ADC << 17);
+    temp |= 1u << 0;
+    dma_hw->ch[dma_chan].read_addr = (uint32_t) &adc_hw->fifo;
+    dma_hw->ch[dma_chan].write_addr = (uint32_t) &raw_adc_val;
+    dma_hw->ch[dma_chan].ctrl_trig |= temp;
+}
 
-//     // 0x0F is 0b00001111, enabling channels 0-3
-//     adc_set_round_robin(0xF0); // Enable channels 0-3 for round robin
+void init_adc_dma() {
+    // fill in
+    init_dma();
+    init_adc_freerun();
+    adc_hw->fcs |= ADC_FCS_EN_BITS;
+    adc_hw->fcs |= ADC_FCS_DREQ_EN_BITS;
+}
 
-//     adc_select_input(4);
+bool update_pots(WaveParams* params) {
+    // Early exit for invalid index
+    if (idx >= PARAM_NUM)
+        return false;
 
-//     adc_run(true); // Start ADC conversions
+    const float pot_val = raw_adc_val * (1.0f / 4095.0f);
+    const typeof(param_config[0])* cfg = &param_config[idx];
+    float* param_ptr = (float*) ((uint8_t*) params + cfg->offset);
 
-//     int dma_chan = dma_claim_unused_channel(true);
-//     dma_hw->ch[dma_chan].transfer_count = (1u << 28) | POT_NUM;
-//     dma_hw->ch[dma_chan].read_addr = &adc_hw->fifo;
-//     dma_hw->ch[dma_chan].write_addr = &raw_adc_buffer;
+    // Normalize current parameter value to 0.0-1.0
+    float param_normalized;
+    if (cfg->is_exponential) {
+        param_normalized = logf(*param_ptr + 1.0f) * 0.43429f; // 1/2.3026 = 0.43429
+    } else {
+        param_normalized = (*param_ptr - cfg->min_val) / (cfg->max_val - cfg->min_val);
+    }
 
-//     uint32_t temp = 0;
-//     temp |= (1u << 2);
-//     temp |= (DREQ_ADC << 17);
-//     temp |= (1u << 0);
-//     dma_hw->ch[dma_chan].ctrl_trig = temp;
+    // Check engagement (early exit if not engaged)
+    if (!pot_engaged[idx]) {
+        // Engage when pot value passes within threshold of current value
+        if (fabsf(pot_val - param_normalized) <= POT_ENGAGE_THRESHOLD) {
+            pot_engaged[idx] = true;
+        } else {
+            return false; // Not engaged yet, don't update
+        }
+    }
 
-//     adc_fifo_setup(true,    // Write each completed conversion to the FIFO
-//                    true,    // Enable DMA data request (DREQ)
-//                    POT_NUM, // DREQ (and IRQ) asserted when at least POT_NUM samples present
-//                    false,   // No ERR bit
-//                    false    // No 8-bit mode
-//     );
+    // Calculate new parameter value
+    float new_value;
+    if (cfg->is_exponential) {
+        new_value = expf(pot_val * 2.3026f) - 1.0f;
+    } else {
+        new_value = pot_val * (cfg->max_val - cfg->min_val) + cfg->min_val;
+    }
 
-//     dma_channel_start(dma_chan);
-// }
+    // Check if value changed significantly (early exit if not)
+    if (fabsf(new_value - *param_ptr) <= cfg->threshold) {
+        return false;
+    }
 
-// /*Current thoughts on design, first must test to see if will work on board.
-//  - Make sure all pots are wired to board, then test values.
-
-// When integrating with the top lvl, make sure to read the adc_buffer values based on the mode_flag
-//  - If mode_flag is false, read adc_buffer[0-3] to params 0-3
-//  - If mode_flag is true, read adc_buffer[0-3] to params 4-7
-// This way we can switch between 2 sets of parameters using the button
-
-// Changes/Updates that could be made:
-//  - Instead of using a single adc_buffer, could use 2 separate buffers for each mode/page
-//    This would allow us to remember the last set values for each parameter when switching modes
-//    But requires more memory
-//  - Could implement debouncing for the button press to avoid multiple toggles on a single press
-
-//  Oh yea need to add functionality for memory later, so that when switching modes, we can remember
-//     the last set values for each parameter, and only change them when the pots are adjusted from
-// their last positions Annoying cause when switching pages the pot position will jump to the current
-// pot values, which may not be desired
-
-//     Fix would be to only update the parameter values when the pot values change significantly
-//     like a locker combo, you have to turn the knob back past 50% or smth. (Our pots arent always
-// accurate so 50% may be different for each one)
-// */
-
-// void check_pots() {
-
-//     if (mode_flag != last_mode) {
-//         for (int i = 0; i < 4; i++)
-//             pot_engaged[i] = false;
-//         last_mode = mode_flag;
-//     }
-
-//     for (int i = 0; i < 4; i++) {
-
-//         float pot_val = raw_adc_buffer[i] / 4095.0f;
-//         int idx = i + (mode_flag ? 4 : 0);
-
-//         float param_val = adc_buffer[idx];
-
-//         if (!pot_engaged[i]) {
-//             if (fabs(pot_val - param_val) <= 0.1) {
-//                 pot_engaged[i] = true;
-//             } else {
-//                 continue;
-//             }
-//         }
-
-//         adc_buffer[idx] = pot_val;
-//     }
-// }
-
-// void get_pots() {
-//     if (mode_flag) {
-//         // Map to parameters 4-7
-//         for (int i = 0; i < POT_NUM; i++) {
-//             printf("Param %d: %d ", i + POT_NUM, raw_adc_buffer[i + POT_NUM]);
-//         }
-//         printf("\n");
-//     } else {
-//         // Map to parameters 0-3
-//         for (int i = 0; i < POT_NUM; i++) {
-//             printf("Param %d: %d ", i, raw_adc_buffer[i]);
-//         }
-//         printf("\n");
-//     }
-// }
+    *param_ptr = new_value;
+    return true;
+}
 
 // // Main function
 // int main() {
 //     stdio_init_all();
 
-//     init_button();
-//     init_adc_dma();
+//     init_button(BUTTON_PIN_LEFT);
+//     init_button(BUTTON_PIN_RIGHT);
 
+//     init_adc_dma();
 //     while (1) {
 //         // Main loop can be used to process adc_buffer based on mode_flag
 //         // For example, map adc_buffer values to parameters based on mode_flag
+//         pot_buff[idx] = raw_adc_val;
+//         printf("Param %d: %d\n", idx, pot_buff[idx]);
 
-//         check_pots();
+//         printf("\n");
 
-//         get_pots();
-
+//         /* If wanted to print all params each time to see if being stored properly
+//         printf("Param 0: %d, Param 1: %d, Param 2: %d, Param 3: %d, Param 4: %d, Param 5: %d,
+//         Param 6: %d, Param 7: %d\n", pot_buff[0], pot_buff[1], pot_buff[2], pot_buff[3],
+//         pot_buff[4], pot_buff[5], pot_buff[6], pot_buff[7]);
+//         */
 //         sleep_ms(500); // Adjust as needed
 //     }
-
 //     return 0;
 // }

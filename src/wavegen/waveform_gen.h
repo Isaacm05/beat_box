@@ -16,6 +16,10 @@ typedef struct {
     float comp_amount; // Pot 7            0.0-1.0
 } WaveParams;
 
+// Legacy function - generates float samples
 int waveform_generate(float* buffer, int max_samples, WaveParams* p);
+
+// New memory-optimized function - generates PWM values directly
+int waveform_generate_pwm(uint16_t* pwm_buffer, int max_samples, WaveParams* p);
 
 #endif
