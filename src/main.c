@@ -2,7 +2,7 @@
 #include "hardware/gpio.h"
 #include <stdio.h>
 
-// === Matrix pin definitions ===
+// --- Matrix Pins ---
 #define PIN_R1  4
 #define PIN_G1  5
 #define PIN_B1  6
@@ -20,10 +20,19 @@
 #define PIN_D   16
 #define PIN_E   17
 
-#define PANEL_WIDTH   64
-#define ROW_PAIRS     32
+#define WIDTH   64
+#define ROWS    64
+#define ROW_PAIRS 32
 
-void matrix_gpio_init(void) {
+// Simple RGB structure
+typedef struct {
+    uint8_t r, g, b;
+} Pixel;
+
+// Framebuffer: 64x64 RGB pixels
+Pixel fb[ROWS][WIDTH];
+
+void matrix_gpio_init() {
     int pins[] = {
         PIN_R1, PIN_G1, PIN_B1,
         PIN_R2, PIN_G2, PIN_B2,
@@ -36,89 +45,84 @@ void matrix_gpio_init(void) {
         gpio_set_dir(pins[i], GPIO_OUT);
         gpio_put(pins[i], 0);
     }
-
-    // Start with OE disabled (panel dark)
     gpio_put(PIN_OE, 1);
 }
 
-void test_pins_blink() {
-    printf("[TEST] Blinking OE / CLK / LAT...\n");
-
-    for (int i = 0; i < 20; i++) {
-        gpio_put(PIN_OE, i & 1);
-        gpio_put(PIN_CLK, i & 1);
-        gpio_put(PIN_LAT, (i >> 1) & 1);
-
-        sleep_ms(200);
-        printf("  OE=%d CLK=%d LAT=%d\n",
-               i & 1, i & 1, (i >> 1) & 1);
-    }
-
-    printf("[TEST] Blink done.\n");
+void set_row(int row) {
+    gpio_put(PIN_A, (row >> 0) & 1);
+    gpio_put(PIN_B, (row >> 1) & 1);
+    gpio_put(PIN_C, (row >> 2) & 1);
+    gpio_put(PIN_D, (row >> 3) & 1);
+    gpio_put(PIN_E, (row >> 4) & 1);
 }
 
-void test_single_row() {
-    printf("[TEST] Lighting one pixel per row...\n");
+void scan_rowpair(int rp) {
+    set_row(rp);
 
-    for (int row = 0; row < 32; row++) {
-        // Set row address
-        gpio_put(PIN_A, (row >> 0) & 1);
-        gpio_put(PIN_B, (row >> 1) & 1);
-        gpio_put(PIN_C, (row >> 2) & 1);
-        gpio_put(PIN_D, (row >> 3) & 1);
-        gpio_put(PIN_E, (row >> 4) & 1);
+    gpio_put(PIN_OE, 1);
+    gpio_put(PIN_LAT, 0);
 
-        printf("  Row %d address: %d%d%d%d%d\n",
-            row,
-            gpio_get(PIN_E), gpio_get(PIN_D),
-            gpio_get(PIN_C), gpio_get(PIN_B), gpio_get(PIN_A)
-        );
+    for (int x = 0; x < WIDTH; x++) {
+        Pixel top = fb[rp][x];
+        Pixel bot = fb[rp + ROW_PAIRS][x];
 
-        // Shift exactly one pixel (top-left red)
-        gpio_put(PIN_R1, 1);
-        gpio_put(PIN_G1, 0);
-        gpio_put(PIN_B1, 0);
+        gpio_put(PIN_R1, top.r > 0);
+        gpio_put(PIN_G1, top.g > 0);
+        gpio_put(PIN_B1, top.b > 0);
+
+        gpio_put(PIN_R2, bot.r > 0);
+        gpio_put(PIN_G2, bot.g > 0);
+        gpio_put(PIN_B2, bot.b > 0);
 
         gpio_put(PIN_CLK, 1);
-        sleep_us(2);
+        asm volatile("nop; nop; nop;");
         gpio_put(PIN_CLK, 0);
-
-        // Latch
-        gpio_put(PIN_LAT, 1);
-        sleep_us(2);
-        gpio_put(PIN_LAT, 0);
-
-        // Flash row ON for 5 ms
-        gpio_put(PIN_OE, 0);
-        sleep_ms(5);
-        gpio_put(PIN_OE, 1);
-
-        sleep_ms(50);
     }
 
-    printf("[TEST] Row test done.\n");
+    gpio_put(PIN_LAT, 1);
+    asm volatile("nop");
+    gpio_put(PIN_LAT, 0);
+
+    gpio_put(PIN_OE, 0);
+    sleep_us(150);
+    gpio_put(PIN_OE, 1);
+}
+
+void fill_color(uint8_t r, uint8_t g, uint8_t b) {
+    for (int y = 0; y < ROWS; y++)
+        for (int x = 0; x < WIDTH; x++)
+            fb[y][x].r = r, fb[y][x].g = g, fb[y][x].b = b;
 }
 
 int main() {
     stdio_init_all();
-    sleep_ms(2000); // Give USB time to enumerate
+    sleep_ms(1500);
 
-    printf("\n=== HUB75 MATRIX DEBUG START ===\n");
-
+    printf("=== MATRIX FRAMEBUFFER TEST START ===\n");
     matrix_gpio_init();
-    printf("GPIO init done.\n");
 
-    // TEST 1: Blink timing control pins
-    test_pins_blink();
+    // Start with red
+    fill_color(255, 0, 0);
+    sleep_ms(500);
 
-    // TEST 2: Light a single pixel on each row
-    test_single_row();
+    // Then green
+    fill_color(0, 255, 0);
+    sleep_ms(500);
 
-    printf("=== DEBUG DONE ===\n");
+    // Then blue
+    fill_color(0, 0, 255);
+    sleep_ms(500);
 
+    // Cycle RGB forever
     while (true) {
-        sleep_ms(500);
-        printf("Running idle...\n");
+        fill_color(255, 0, 0);
+        for (int i = 0; i < 300; i++) for (int rp = 0; rp < ROW_PAIRS; rp++) scan_rowpair(rp);
+
+        fill_color(0, 255, 0);
+        for (int i = 0; i < 300; i++) for (int rp = 0; rp < ROW_PAIRS; rp++) scan_rowpair(rp);
+
+        fill_color(0, 0, 255);
+        for (int i = 0; i < 300; i++) for (int rp = 0; rp < ROW_PAIRS; rp++) scan_rowpair(rp);
     }
 
     return 0;
