@@ -92,11 +92,14 @@ void led_matrix_refresh(void) {
         uint8_t bit_mask = 1 << bit;
 
         for (int row = 0; row < SCAN_ROWS; row++) {
-            // Disable output while shifting
+            // Disable output while updating
             gpio_put(PIN_OE, 1);
 
-            // Shift out pixel data for this row
-            for (int col = 0; col < MATRIX_WIDTH; col++) {
+            // Set row address first
+            set_row_address(row);
+
+            // Shift out pixel data for this row (reverse order - shift register fills right to left)
+            for (int col = MATRIX_WIDTH - 1; col >= 0; col--) {
                 // Upper half pixel (row)
                 uint8_t r1 = (framebuffer[row][col][0] & bit_mask) ? 1 : 0;
                 uint8_t g1 = (framebuffer[row][col][1] & bit_mask) ? 1 : 0;
@@ -119,14 +122,12 @@ void led_matrix_refresh(void) {
                 clock_pulse();
             }
 
-            // Set row address
-            set_row_address(row);
-
             // Latch the data
             latch_pulse();
 
+            // Enable output - duration proportional to bit weight
             gpio_put(PIN_OE, 0);
-            sleep_us((1 << bit) * 10); // 10x multiplier
+            sleep_us((1 << bit) * 5);
         }
     }
 }
