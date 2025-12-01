@@ -24,8 +24,7 @@ void button_isr_left() {
         gpio_acknowledge_irq(BUTTON_PIN_LEFT, GPIO_IRQ_EDGE_RISE);
 
         // Toggle mode flag
-        if (idx == 0 || idx == 3 || idx == 4 || idx == 7 )
-        {
+        if (idx == 0 || idx == 3 || idx == 4 || idx == 7) {
             update_lcd_params = true;
         }
         idx--;
@@ -43,8 +42,7 @@ void button_isr_right() {
         gpio_acknowledge_irq(BUTTON_PIN_RIGHT, GPIO_IRQ_EDGE_RISE);
 
         // Toggle mode flag
-        if (idx == 0 || idx == 3 || idx == 4 || idx == 7 )
-        {
+        if (idx == 0 || idx == 3 || idx == 4 || idx == 7) {
             update_lcd_params = true;
         }
         idx++;
