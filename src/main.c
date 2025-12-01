@@ -115,6 +115,8 @@ void fm6126a_reset() {
 
 
 int main() {
+
+    printf("Hello World\n");
     sleep_ms(200);
     init_pins();
     fm6126a_reset();
