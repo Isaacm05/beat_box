@@ -101,14 +101,16 @@ void led_matrix_refresh(void) {
             // Shift out pixel data for this row (reverse order - shift register fills right to left)
             for (int col = MATRIX_WIDTH - 1; col >= 0; col--) {
                 // Upper half pixel (row)
-                uint8_t r1 = (framebuffer[row][col][0] & bit_mask) ? 1 : 0;
+                // Swapped R and B channels (framebuffer stores RGB, but panel expects BGR)
+                uint8_t r1 = (framebuffer[row][col][2] & bit_mask) ? 1 : 0; // Use B channel for R
                 uint8_t g1 = (framebuffer[row][col][1] & bit_mask) ? 1 : 0;
-                uint8_t b1 = (framebuffer[row][col][2] & bit_mask) ? 1 : 0;
+                uint8_t b1 = (framebuffer[row][col][0] & bit_mask) ? 1 : 0; // Use R channel for B
 
                 // Lower half pixel (row + 32)
-                uint8_t r2 = (framebuffer[row + SCAN_ROWS][col][0] & bit_mask) ? 1 : 0;
+                // Swapped R and B channels (framebuffer stores RGB, but panel expects BGR)
+                uint8_t r2 = (framebuffer[row + SCAN_ROWS][col][2] & bit_mask) ? 1 : 0; // Use B channel for R
                 uint8_t g2 = (framebuffer[row + SCAN_ROWS][col][1] & bit_mask) ? 1 : 0;
-                uint8_t b2 = (framebuffer[row + SCAN_ROWS][col][2] & bit_mask) ? 1 : 0;
+                uint8_t b2 = (framebuffer[row + SCAN_ROWS][col][0] & bit_mask) ? 1 : 0; // Use R channel for B
 
                 // Set RGB pins
                 gpio_put(PIN_R1, r1);
