@@ -2,38 +2,39 @@
 #include "hardware/gpio.h"
 
 // TOP half RGB
-#define PIN_R1  2
-#define PIN_G1  3
-#define PIN_B1  4
+#define PIN_R1  5
+#define PIN_G1  6
+#define PIN_B1  7
 
 // BOTTOM half RGB
-#define PIN_R2  6
-#define PIN_G2  7
-#define PIN_B2  8
+#define PIN_R2  8
+#define PIN_G2  9
+#define PIN_B2  10
 
 // Address lines A–E
-#define PIN_A   9
-#define PIN_B   11
-#define PIN_C   12
-#define PIN_D   13
-#define PIN_E   14
+#define PIN_A   11
+#define PIN_B   12
+#define PIN_C   13
+#define PIN_D   14
+#define PIN_E   15
 
 // Control
 #define PIN_CLK 16
-#define PIN_LAT 18   // OE is tied to GND externally
+#define PIN_OE  17
+#define PIN_LAT 18  
 
 #define WIDTH 64
-#define ROWS 32   // 64x64 panel → 32 row pairs
+#define ROWS 32
 
 void init_pins(void) {
     int pins[] = {
         PIN_R1, PIN_G1, PIN_B1,
         PIN_R2, PIN_G2, PIN_B2,
         PIN_A, PIN_B, PIN_C, PIN_D, PIN_E,
-        PIN_CLK, PIN_LAT
+        PIN_CLK, PIN_OE, PIN_LAT
     };
 
-    for (int i = 0; i < (int)(sizeof(pins)/sizeof(pins[0])); i++) {
+    for (int i = 0; i < 14; i++) {
         gpio_init(pins[i]);
         gpio_set_dir(pins[i], GPIO_OUT);
         gpio_put(pins[i], 0);
@@ -41,7 +42,7 @@ void init_pins(void) {
 }
 
 void set_row(int r) {
-    gpio_put(PIN_A, (r >> 0) & 1);
+    gpio_put(PIN_A, (r & 1));
     gpio_put(PIN_B, (r >> 1) & 1);
     gpio_put(PIN_C, (r >> 2) & 1);
     gpio_put(PIN_D, (r >> 3) & 1);
@@ -49,7 +50,6 @@ void set_row(int r) {
 }
 
 void shift_white_pixel(void) {
-    // white on both halves
     gpio_put(PIN_R1, 1);
     gpio_put(PIN_G1, 1);
     gpio_put(PIN_B1, 1);
@@ -62,53 +62,65 @@ void shift_white_pixel(void) {
     gpio_put(PIN_CLK, 0);
 }
 
-void draw_full_white(int ms) {
-    for (int t = 0; t < ms; t++) {
-        for (int row = 0; row < ROWS; row++) {
-            set_row(row);
+void draw_full_white(void) {
+    for (int row = 0; row < ROWS; row++) {
+        gpio_put(PIN_OE, 1);  // disable output while shifting
 
-            // shift 64 white pixels into this rowpair
-            for (int x = 0; x < WIDTH; x++) {
-                shift_white_pixel();
-            }
+        set_row(row);
 
-            // latch
-            gpio_put(PIN_LAT, 1);
-            gpio_put(PIN_LAT, 0);
-
-            // small hold time per row
-            sleep_us(150);
+        for (int x = 0; x < WIDTH; x++) {
+            shift_white_pixel();
         }
+
+        // Latch new row
+        gpio_put(PIN_LAT, 1);
+        gpio_put(PIN_LAT, 0);
+
+        gpio_put(PIN_OE, 0);   // enable output for this row
+
+        // HOLD the row so it becomes visible
+        sleep_us(40);          // *** this controls brightness and refresh ***
     }
 }
 
-int main() {
-    stdio_init_all();
-    sleep_ms(500);
+void configure_display(void)
+{
+    gpio_put(PIN_CLK, 0);
+    gpio_put(PIN_OE, 0);
+    gpio_put(PIN_LAT, 0);
+}
 
+// Write two FM6126A control registers:
+// 1. Register 0x0C = 0x00 (unlock 1)
+// 2. Register 0x0B = 0x00 (unlock 2)
+
+void fm6126a_write(uint8_t reg, uint8_t value) {
+    // Send 13 bits: AAAAA DDDDDDDDD
+    // Panel ignores B1/B2 for this command, but uses R1 as data.
+
+    for (int i = 12; i >= 0; i--) {
+        int bit = ( (reg << 8) | value ) >> i & 1;
+        gpio_put(PIN_R1, bit);
+        gpio_put(PIN_CLK, 1);
+        gpio_put(PIN_CLK, 0);
+    }
+    gpio_put(PIN_LAT, 1);
+    gpio_put(PIN_LAT, 0);
+}
+
+void fm6126a_reset() {
+    fm6126a_write(0x0C, 0x00);
+    fm6126a_write(0x0B, 0x00);
+}
+
+
+int main() {
+    sleep_ms(200);
     init_pins();
+    fm6126a_reset();
+    configure_display();
 
     while (1) {
-        draw_full_white(2000);   // ~2 seconds full white
-        // clear off-time: just send black
-        for (int t = 0; t < 500; t++) {
-            for (int row = 0; row < ROWS; row++) {
-                set_row(row);
-                // shift black pixels
-                for (int x = 0; x < WIDTH; x++) {
-                    gpio_put(PIN_R1, 0);
-                    gpio_put(PIN_G1, 0);
-                    gpio_put(PIN_B1, 0);
-                    gpio_put(PIN_R2, 0);
-                    gpio_put(PIN_G2, 0);
-                    gpio_put(PIN_B2, 0);
-                    gpio_put(PIN_CLK, 1);
-                    gpio_put(PIN_CLK, 0);
-                }
-                gpio_put(PIN_LAT, 1);
-                gpio_put(PIN_LAT, 0);
-                sleep_us(150);
-            }
-        }
+        draw_full_white();
     }
 }
