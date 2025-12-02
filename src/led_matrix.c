@@ -4,8 +4,8 @@
 uint8_t framebuffer[MATRIX_HEIGHT][MATRIX_WIDTH][3];
 
 
-// 5x7 bitmap font: each character is 5 columns, each column = 7 bits
-// Only SPACE (index 0), ! (index 1), digits, and uppercase letters implemented
+// 5x7 bitmap font
+// Only SPACE, ! , digits, and uppercase letters 
 static const uint8_t font5x7[][5] = {
 
     // SPACE (index 0)
@@ -14,7 +14,7 @@ static const uint8_t font5x7[][5] = {
     // ! (index 1)
     {0x00,0x00,0x5F,0x00,0x00},
 
-    // '0'..'9' (indexes 2..11)
+    // digits (index 2 - 11)
     {0x3E,0x51,0x49,0x45,0x3E}, // 0
     {0x00,0x42,0x7F,0x40,0x00}, // 1
     {0x42,0x61,0x51,0x49,0x46}, // 2
@@ -26,7 +26,7 @@ static const uint8_t font5x7[][5] = {
     {0x36,0x49,0x49,0x49,0x36}, // 8
     {0x06,0x49,0x49,0x29,0x1E}, // 9
 
-    // A-Z (indexes 12..37)
+    // A-Z (index 12 - 37)
     {0x7E,0x11,0x11,0x11,0x7E}, // A
     {0x7F,0x49,0x49,0x49,0x36}, // B
     {0x3E,0x41,0x41,0x41,0x22}, // C
@@ -58,7 +58,7 @@ static const uint8_t font5x7[][5] = {
 static void draw_char(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b)
 {
     int index;
-
+    // selects char from font5x7 array
     if (c == ' ') {
         index = 0;
     }
@@ -66,17 +66,18 @@ static void draw_char(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b)
         index = 1;
     }
     else if (c >= '0' && c <= '9') {
-        index = 2 + (c - '0');             // digits = 2..11
+        index = 2 + (c - '0');          
     }
     else if (c >= 'A' && c <= 'Z') {
-        index = 12 + (c - 'A');            // A-Z
+        index = 12 + (c - 'A');        
     }
     else {
-        return; // unsupported character
+        return;
     }
 
     const uint8_t *glyph = font5x7[index];
 
+    // fills in pixels for character
     for (int col = 0; col < 5; col++) {
         uint8_t bits = glyph[col];
         for (int row = 0; row < 7; row++) {
@@ -92,8 +93,8 @@ void led_matrix_draw_text(int x, int y, const char *text, uint8_t r, uint8_t g, 
     int cursor_x = x;
 
     for (int i = 0; text[i] != '\0'; i++) {
-        draw_char(cursor_x, y, text[i], r, g, b);
-        cursor_x += 6;   // 5px glyph + 1px spacing
+        draw_char(cursor_x, y, text[i], r, g, b); // calls helper function
+        cursor_x += 6; // extra 1px for spacing
     }
 }
 
@@ -104,7 +105,7 @@ void led_matrix_scroll_text(const char *text, int y, uint8_t r, uint8_t g, uint8
     for (const char *p = text; *p; p++)
         text_length++;
 
-    int text_width = text_length * 6;  // 5px glyph + 1px spacing
+    int text_width = text_length * 6;  // extra 1px for spacing
 
     // Start from the right edge of the screen
     int x_offset = MATRIX_WIDTH;
@@ -118,18 +119,6 @@ void led_matrix_scroll_text(const char *text, int y, uint8_t r, uint8_t g, uint8
         for (int i = 0; text[i] != '\0'; i++) {
 
             char c = text[i];
-
-            // Convert to uppercase (your font only supports uppercase)
-            if (c >= 'a' && c <= 'z')
-                c -= 32;
-
-            // Skip unsupported chars
-            if (!((c == ' ') || (c == '!') ||
-                  (c >= '0' && c <= '9') ||
-                  (c >= 'A' && c <= 'Z'))) {
-                cursor_x += 6;
-                continue;
-            }
 
             draw_char(cursor_x, y, c, r, g, b);
             cursor_x += 6;
@@ -152,14 +141,13 @@ void led_matrix_scroll_text(const char *text, int y, uint8_t r, uint8_t g, uint8
 }
 
 void led_matrix_draw_text_rainbow(int x, int y, const char *text) {
-    // Discrete 7-color rainbow palette (fits 1-bit-per-channel output)
     static const uint8_t rainbow[][3] = {
         {255,   0,   0}, // Red
-        {255, 255,   0}, // Yellow (R+G)
+        {255, 255,   0}, // Yellow 
         {  0, 255,   0}, // Green
-        {  0, 255, 255}, // Cyan (G+B)
+        {  0, 255, 255}, // Cyan 
         {  0,   0, 255}, // Blue
-        {255,   0, 255}, // Magenta (R+B)
+        {255,   0, 255}, // Magenta 
         {255, 255, 255}, // White
     };
     const int num_colors = 7;
@@ -169,19 +157,6 @@ void led_matrix_draw_text_rainbow(int x, int y, const char *text) {
 
     while (*text) {
         char c = *text++;
-
-        // Force uppercase so it matches your font
-        if (c >= 'a' && c <= 'z') {
-            c -= 32;
-        }
-
-        // Skip unsupported chars but still advance position
-        if (!((c == ' ') || (c == '!') ||
-              (c >= '0' && c <= '9') ||
-              (c >= 'A' && c <= 'Z'))) {
-            cursor_x += 6;
-            continue;
-        }
 
         uint8_t r = rainbow[i % num_colors][0];
         uint8_t g = rainbow[i % num_colors][1];
@@ -211,7 +186,7 @@ void led_matrix_scroll_text_rainbow(const char *text, int speed_us)
     // Compute full pixel width of the text
     int text_length = 0;
     for (const char *p = text; *p; p++) text_length++;
-    int text_width = text_length * 6;   // 5 pixels + 1 space
+    int text_width = text_length * 6;   // extra 1px for spacing
 
     // Start off-screen to the right
     int x_offset = MATRIX_WIDTH;
@@ -226,18 +201,6 @@ void led_matrix_scroll_text_rainbow(const char *text, int speed_us)
         for (int i = 0; text[i] != '\0'; i++) {
 
             char c = text[i];
-
-            // Convert to uppercase so your font matches
-            if (c >= 'a' && c <= 'z')
-                c -= 32;
-
-            // Skip unsupported characters
-            if (!((c == ' ') || (c == '!') ||
-                  (c >= '0' && c <= '9') ||
-                  (c >= 'A' && c <= 'Z'))) {
-                cursor_x += 6;
-                continue;
-            }
 
             // Pick a rainbow color
             uint8_t r = rainbow[color_i % num_colors][0];
@@ -297,35 +260,33 @@ static inline void set_row_address(uint8_t row) {
 }
 
 static inline void clock_pulse(void) {
-    // Fast pulse: panel is fine with MHz-level clocks
     gpio_put(PIN_CLK, 1);
-    sleep_us(1); // brief delay
+    sleep_us(1); 
     gpio_put(PIN_CLK, 0);
 }
 
 static inline void latch_pulse(void) {
-    // Fast latch pulse
     gpio_put(PIN_LAT, 1);
-    sleep_us(1); // brief delay
+    sleep_us(1);
     gpio_put(PIN_LAT, 0);
 }
 
 void led_matrix_refresh(void) {
     for (int row = 0; row < SCAN_ROWS; row++) {
-        // 1) Disable output while we shift new data
+        // Disable output while we shift new data
         gpio_put(PIN_OE, 1);
 
-        // 2) Select which row pair we're about to display
+        // Select which row pair we're about to display
         set_row_address(row);
 
-        // 3) Shift out 64 pixels for this row pair
+        // Shift out 64 pixels for this row pair
         for (int col = 0; col < MATRIX_WIDTH; col++) {
-            // Upper half (rows 0–31)
+            // Upper half 
             uint8_t r1 = framebuffer[row][col][0] ? 1 : 0;
             uint8_t g1 = framebuffer[row][col][1] ? 1 : 0;
             uint8_t b1 = framebuffer[row][col][2] ? 1 : 0;
 
-            // Lower half (rows 32–63)
+            // Lower half 
             uint8_t r2 = framebuffer[row + SCAN_ROWS][col][0] ? 1 : 0;
             uint8_t g2 = framebuffer[row + SCAN_ROWS][col][1] ? 1 : 0;
             uint8_t b2 = framebuffer[row + SCAN_ROWS][col][2] ? 1 : 0;
@@ -340,12 +301,12 @@ void led_matrix_refresh(void) {
             clock_pulse();
         }
 
-        // 4) Latch shifted data into output registers
+        // Latch shifted data into output registers
         latch_pulse();
 
-        // 5) Turn the row pair ON for some time (brightness)
+        // Turn the row pair ON for some time 
         gpio_put(PIN_OE, 0);
-        sleep_us(445);   // tweak between ~100–500 for brightness vs flicker
+        sleep_us(445);   // lower = less bright, less flicker. higher = more bright, more flicker
     }
 }
 
@@ -385,7 +346,6 @@ void led_matrix_draw_circle(int cx, int cy, int radius, uint8_t r, uint8_t g, ui
 
     while (y <= x) {
 
-        // 8 symmetric circle points
         led_matrix_set_pixel(cx + x, cy + y, r, g, b);
         led_matrix_set_pixel(cx + y, cy + x, r, g, b);
         led_matrix_set_pixel(cx - y, cy + x, r, g, b);
@@ -415,7 +375,6 @@ void led_matrix_fill_circle(int cx, int cy, int radius, uint8_t r, uint8_t g, ui
 
     while (y <= x) {
 
-        // Draw horizontal spans for each symmetric circle slice
         for (int i = cx - x; i <= cx + x; i++) {
             led_matrix_set_pixel(i, cy + y, r, g, b);
             led_matrix_set_pixel(i, cy - y, r, g, b);

@@ -1,4 +1,3 @@
-// led_matrix.h
 #ifndef LED_MATRIX_H
 #define LED_MATRIX_H
 
@@ -11,7 +10,7 @@
 #define MATRIX_HEIGHT 64
 #define SCAN_ROWS 32 // 64 / 2, panel is 1/32 scan
 
-// RGB Data pins - Upper half (directly consecutive for PIO)
+// RGB Data pins - Upper half
 #define PIN_R1 2
 #define PIN_G1 3
 #define PIN_B1 4

@@ -19,32 +19,25 @@ const uint8_t colors[][3] = {
 };
 const int num_colors = 8;
 
-// button test code 
+// active-low button test code 
 #define BUTTON_PIN 19
-volatile bool button_event = false;   // set in ISR, used in main loop
-
+volatile bool button_event = false;
 
 void button_init(void) {
     gpio_init(BUTTON_PIN);
     gpio_set_dir(BUTTON_PIN, GPIO_IN);
-    gpio_pull_up(BUTTON_PIN);  // enable pull-up, so default = HIGH
+    gpio_pull_up(BUTTON_PIN); 
 }
 
 bool button_pressed(void) {
-    return gpio_get(BUTTON_PIN) == 0;   // active LOW
+    return gpio_get(BUTTON_PIN) == 0; 
 }
 // end button test code
 
 
-// 1) static single pixel test
-void test_single_pixel(uint16_t x, uint16_t y) {
-    led_matrix_clear();
-    led_matrix_set_pixel(x, y, 255, 0, 0); // red pixel
-}
-
-// 2) moving single pixel scan test
-void test_moving_pixel(void) {
-    while (true) {
+// moving single pixel scan test
+void moving_pixel(void) {
+    while (1) {
         for (int y = 0; y < MATRIX_HEIGHT; y++) {
             for (int x = 0; x < MATRIX_WIDTH; x++) {
 
@@ -60,8 +53,8 @@ void test_moving_pixel(void) {
     }
 }
 
-// 3) full screen color cycle test
-void test_color_cycle(void) {
+// full screen color cycle test
+void full_color_cycle(void) {
     int current_color = 0;
 
     uint64_t last_change = time_us_64();
@@ -89,17 +82,17 @@ void test_color_cycle(void) {
     }
 }
 
-// 4) grid pattern test
-void test_grid_pattern(void) {
+// grid pattern test
+void grid_pattern(void) {
     led_matrix_clear();
 
-    // Every 8 pixels: draw a line
+    // every 8 pixels draw  line
     for (int y = 0; y < MATRIX_HEIGHT; y++) {
         for (int x = 0; x < MATRIX_WIDTH; x++) {
 
             bool line =
-                (x % 8 == 0) ||   // vertical grid line
-                (y % 8 == 0);     // horizontal grid line
+                (x % 8 == 0) ||   
+                (y % 8 == 0);     
 
             if (line)
                 led_matrix_set_pixel(x, y, 255, 255, 255);
@@ -107,43 +100,26 @@ void test_grid_pattern(void) {
     }
 }
 
-// 5) RGB stripes test
-void test_rgb_stripes(void) {
+// RGB stripes test
+void rgb_stripes(void) {
     int stripe_height = MATRIX_HEIGHT / 3;
 
     for (int y = 0; y < MATRIX_HEIGHT; y++) {
         for (int x = 0; x < MATRIX_WIDTH; x++) {
 
             if (y < stripe_height)
-                led_matrix_set_pixel(x, y, 255, 0, 0);    // Red stripe
+                led_matrix_set_pixel(x, y, 255, 0, 0);    // red
             else if (y < stripe_height * 2)
-                led_matrix_set_pixel(x, y, 0, 255, 0);    // Green stripe
+                led_matrix_set_pixel(x, y, 0, 255, 0);    // green
             else
-                led_matrix_set_pixel(x, y, 0, 0, 255);    // Blue stripe
+                led_matrix_set_pixel(x, y, 0, 0, 255);    // blue
         }
     }
 }
 
-// 6) gradient test
-void test_gradient(void) {
-    led_matrix_clear();
-
-    for (int y = 0; y < MATRIX_HEIGHT; y++) {
-        for (int x = 0; x < MATRIX_WIDTH; x++) {
-
-            // Create binary "pseudogradient" using thresholds
-            uint8_t r = (x % 8) < 4 ? 255 : 0;
-            uint8_t g = (y % 8) < 4 ? 255 : 0;
-            uint8_t b = ((x + y) % 8) < 4 ? 255 : 0;
-
-            led_matrix_set_pixel(x, y, r, g, b);
-        }
-    }
-}
-
-// 7) horizontal fade test
-void test_horizontal_fade(void) {
-    // 4x4 ordered dithering matrix (Bayer matrix)
+// horizontal fade test
+void horizontal_fade(void) {
+    // 4x4 ordered dithering matrix 
     static const uint8_t bayer[4][4] = {
         {  0,  8,  2, 10 },
         { 12,  4, 14,  6 },
@@ -174,9 +150,9 @@ void test_horizontal_fade(void) {
     }
 }
 
-// 8) vertical fade test
-void test_vertical_fade(void) {
-    // 4x4 ordered dithering matrix (Bayer matrix)
+// vertical fade test
+void vertical_fade(void) {
+    // 4x4 ordered dithering matrix 
     static const uint8_t bayer[4][4] = {
         {  0,  8,  2, 10 },
         { 12,  4, 14,  6 },
@@ -209,54 +185,13 @@ void test_vertical_fade(void) {
 
 }
 
-// 9) text rendering test
-void test_text_display() {
-    led_matrix_clear();
-    led_matrix_draw_text(10, 10, "HELLO!!", 255, 255, 255);
-}
-
-// 10) rainbow text test
-void test_rainbow_text() {
-    led_matrix_clear();
-    led_matrix_draw_text_rainbow(5, 10, "HELLO!!!");
-}
-
-// 11) scrolling text test
-void test_scrolling_text() {
-    led_matrix_scroll_text("HELLO WORLD", 20, 255,255,255,30000);  
-}
-
-// 12) scrolling rainbow text test
-void test_scrolling_rainbow_text() {
-    led_matrix_scroll_text_rainbow("HELLO WORLD", 30000);
-}
-
-// 13) circle drawing test
-void test_circle() {
-    led_matrix_clear();
-    led_matrix_draw_circle(32, 32, 20, 255, 255, 255); // center, radius, white
-}
- 
-// 14) filled circle test
-void test_filled_circle() {
-    led_matrix_clear();
-    led_matrix_fill_circle(32, 32, 20, 255, 255, 255);
-}
-
-// 15) rectangle drawing test
-void test_rectangle() {
-    led_matrix_clear();
-    led_matrix_draw_rect(5, 5, 40, 20, 255, 255, 255);
-}
-
-// 16) filled rectangle test
-void test_fill_rectangle() {
-    led_matrix_clear();
-    led_matrix_fill_rect(20, 30, 15, 10, 255, 0, 0);
+// button interrupt service routine
+void button_isr(uint gpio, uint32_t events) {
+    button_event = true;
 }
 
 
-// main - set up to run any one of the tests
+// general main function template
 /*int main() {
     stdio_init_all();
     sleep_ms(2000);
@@ -264,74 +199,21 @@ void test_fill_rectangle() {
     printf("Initializing LED matrix...\n");
     led_matrix_init();
 
-    // Pick ONE of these to run:
 
-    // 1. Display a single pixel at (20, 10)
-    // test_single_pixel(20, 10);
-
-    // 2. Move a pixel across the entire panel
-    // test_moving_pixel();
-
-    // 3. Full-screen color cycle
-    //test_color_cycle();
-
-    // 4. Grid pattern test
-    //test_grid_pattern();  
-
-    // 5. RGB stripes test
-    //test_rgb_stripes();
-
-    // 6. Gradient test
-    // this one doesn't really work but looks cool
-    //test_gradient();   
-
-    // 7. Horizontal fade 
-    //test_horizontal_fade();
-
-    // 8. Vertical fade 
-    //test_vertical_fade();
-
-    // 9. Text rendering test 5x7 font
-    //test_text_display();
-
-    // 10. Rainbow text test
-    //test_rainbow_text();
-
-    // 11. Scrolling text test
-    //test_scrolling_text();
-
-    // 12. Scrolling rainbow text test
-    //test_scrolling_rainbow_text();
-
-    // 13. Circle drawing test
-    //test_circle();
-
-    // 14. Filled circle test
-    //test_filled_circle();
-
-    // 15. Rectangle drawing test
-    //test_rectangle();
-
-    // 16. Filled rectangle test
-    //test_fill_rectangle();
+    // clear and then call a function
+    led_matrix_clear();
+    led_matrix_fill_circle(32, 32, 20, 255, 255, 255);
 
 
-    // infinite refresh loop
-    while (true) { 
+    // infinite refresh loop 
+    while (1) { 
         led_matrix_refresh();
     }
 }
 */
 
 
-
-// button interrupt service routine
-void button_isr(uint gpio, uint32_t events) {
-    // Just record the event — ISR must be FAST
-    button_event = true;
-}
-
-// main - simple color fill with button to change color
+// main - simple color fill with button interrupt to change color
 int main() {
     stdio_init_all();
     sleep_ms(2000);
@@ -352,26 +234,27 @@ int main() {
     uint64_t last_press_time = 0;
 
     while (1) {
-        led_matrix_refresh();   // always keep the display alive
+        led_matrix_refresh();
 
         if (button_event) {
             uint64_t now = time_us_64();
 
-            // Debounce check
+            // debounce check
             if (now - last_press_time > 100000) {
                 last_press_time = now;
 
-                // Advance color
+                // next color
                 current_color = (current_color + 1) % num_colors;
 
                 led_matrix_fill(colors[current_color][0],
                                 colors[current_color][1],
                                 colors[current_color][2]);
             }
-            
+
             printf("Color changed to: Color %d\n", current_color + 1);
 
-            button_event = false;    // clear event flag
+            // clear flag
+            button_event = false;  
         }
     }
 }
