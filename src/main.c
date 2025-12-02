@@ -124,7 +124,7 @@ int main() {
                 (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
                 (int) (adc_buffer.comp_amount * 100), idx);
         }
-        if (params_updated) {
+        if (params_updated || menu_updated) {
             // Regenerate waveform with new parameters
             waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
             waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer); // Generate float version for
@@ -142,6 +142,7 @@ int main() {
                 (int) (adc_buffer.comp_amount * 100), idx);
 
             params_changed = true;
+            menu_updated = false;
             last_edit_time = current_time;
         }
 
@@ -151,7 +152,6 @@ int main() {
             pwm_play_pwm_nonblocking(pwm_buf, MAX_SAMPLES);
 
             params_changed = false; // Reset change flag
-            
         }
 
         // only sleep if nothing happened

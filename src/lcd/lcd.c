@@ -1024,7 +1024,7 @@ void LCD_PrintWaveMenu(int id, int freq, int amp, int decay, int dc_offset, int 
 
     if (select == 0 || select == 4)
     {
-        LCD_DrawRectangle( 195, 55, 210, 110, COLOR_BLACK);
+        LCD_DrawRectangle( 195, 57, 210, 110, COLOR_BLACK);
     }
     if (select == 1 )
     {

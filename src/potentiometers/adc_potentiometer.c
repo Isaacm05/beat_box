@@ -8,6 +8,7 @@
 // Define global variables
 volatile uint32_t raw_adc_val;
 volatile int idx = 0;
+volatile bool menu_updated = false;
 volatile bool update_lcd_params = 0;
 bool pot_engaged[PARAM_NUM] = {false}; // Explicitly initialize all to false
 WaveParams* current_params;
@@ -27,6 +28,7 @@ void button_isr_left() {
         if (idx == 0 || idx == 3 || idx == 4 || idx == 7) {
             update_lcd_params = true;
         }
+        menu_updated = true;
         idx--;
         idx = (idx < 0) ? (PARAM_NUM - 1) : idx;
 
@@ -45,6 +47,7 @@ void button_isr_right() {
         if (idx == 0 || idx == 3 || idx == 4 || idx == 7) {
             update_lcd_params = true;
         }
+        menu_updated = true;
         idx++;
         idx = (idx >= PARAM_NUM) ? 0 : idx;
 
