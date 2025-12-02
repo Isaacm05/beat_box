@@ -55,41 +55,6 @@ static const uint8_t font5x7[][5] = {
     {0x61,0x51,0x49,0x45,0x43}, // Z
 };
 
-// Convert HSV (0–255 each) into RGB (0–255 each)
-static void hsv_to_rgb(uint8_t h, uint8_t s, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b)
-{
-    uint8_t region, remainder, p, q, t;
-
-    if (s == 0) {
-        *r = v;
-        *g = v;
-        *b = v;
-        return;
-    }
-
-    region = h / 43;            // 256 / 6 = approx 43 per region
-    remainder = (h - (region * 43)) * 6;
-
-    p = (v * (255 - s)) >> 8;
-    q = (v * (255 - ((s * remainder) >> 8))) >> 8;
-    t = (v * (255 - ((s * (255 - remainder)) >> 8))) >> 8;
-
-    switch (region) {
-        case 0:
-            *r = v; *g = t; *b = p; break;
-        case 1:
-            *r = q; *g = v; *b = p; break;
-        case 2:
-            *r = p; *g = v; *b = t; break;
-        case 3:
-            *r = p; *g = q; *b = v; break;
-        case 4:
-            *r = t; *g = p; *b = v; break;
-        default:
-            *r = v; *g = p; *b = q; break;
-    }
-}
-
 static void draw_char(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b)
 {
     int index;
@@ -380,7 +345,7 @@ void led_matrix_refresh(void) {
 
         // 5) Turn the row pair ON for some time (brightness)
         gpio_put(PIN_OE, 0);
-        sleep_us(425);   // tweak between ~100–500 for brightness vs flicker
+        sleep_us(445);   // tweak between ~100–500 for brightness vs flicker
     }
 }
 

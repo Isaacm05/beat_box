@@ -7,6 +7,34 @@
 #define FRAME_TIME_US (1000000 / TARGET_FPS)
 #define COLOR_CHANGE_INTERVAL_US 1000000 // 1 second
 
+const uint8_t colors[][3] = {
+        {255,   0,   0},  // Red
+        {  0, 255,   0},  // Green
+        {  0,   0, 255},  // Blue
+        {255, 255,   0},  // Yellow
+        {255,   0, 255},  // Magenta
+        {  0, 255, 255},  // Cyan
+        {255, 255, 255},  // White
+        {  0,   0,   0},  // Black
+};
+const int num_colors = 8;
+
+// button test code 
+#define BUTTON_PIN 19
+volatile bool button_event = false;   // set in ISR, used in main loop
+
+
+void button_init(void) {
+    gpio_init(BUTTON_PIN);
+    gpio_set_dir(BUTTON_PIN, GPIO_IN);
+    gpio_pull_up(BUTTON_PIN);  // enable pull-up, so default = HIGH
+}
+
+bool button_pressed(void) {
+    return gpio_get(BUTTON_PIN) == 0;   // active LOW
+}
+// end button test code
+
 
 // 1) static single pixel test
 void test_single_pixel(uint16_t x, uint16_t y) {
@@ -34,18 +62,6 @@ void test_moving_pixel(void) {
 
 // 3) full screen color cycle test
 void test_color_cycle(void) {
-    const uint8_t colors[][3] = {
-        {255,   0,   0},  // Red
-        {  0, 255,   0},  // Green
-        {  0,   0, 255},  // Blue
-        {255, 255,   0},  // Yellow
-        {255,   0, 255},  // Magenta
-        {  0, 255, 255},  // Cyan
-        {255, 255, 255},  // White
-        {  0,   0,   0},  // Black
-    };
-
-    const int num_colors = 8;
     int current_color = 0;
 
     uint64_t last_change = time_us_64();
@@ -241,7 +257,7 @@ void test_fill_rectangle() {
 
 
 // main - set up to run any one of the tests
-int main() {
+/*int main() {
     stdio_init_all();
     sleep_ms(2000);
 
@@ -303,5 +319,59 @@ int main() {
     // infinite refresh loop
     while (true) { 
         led_matrix_refresh();
+    }
+}
+*/
+
+
+
+// button interrupt service routine
+void button_isr(uint gpio, uint32_t events) {
+    // Just record the event — ISR must be FAST
+    button_event = true;
+}
+
+// main - simple color fill with button to change color
+int main() {
+    stdio_init_all();
+    sleep_ms(2000);
+
+    led_matrix_init();
+
+    button_init();
+    // Clear any previous IRQ
+    gpio_set_irq_enabled_with_callback(BUTTON_PIN, GPIO_IRQ_EDGE_FALL, true, &button_isr);
+
+
+    int current_color = 0;
+    // Initial fill
+    led_matrix_fill(colors[current_color][0],
+                    colors[current_color][1],
+                    colors[current_color][2]);
+
+    uint64_t last_press_time = 0;
+
+    while (1) {
+        led_matrix_refresh();   // always keep the display alive
+
+        if (button_event) {
+            uint64_t now = time_us_64();
+
+            // Debounce check
+            if (now - last_press_time > 100000) {
+                last_press_time = now;
+
+                // Advance color
+                current_color = (current_color + 1) % num_colors;
+
+                led_matrix_fill(colors[current_color][0],
+                                colors[current_color][1],
+                                colors[current_color][2]);
+            }
+            
+            printf("Color changed to: Color %d\n", current_color + 1);
+
+            button_event = false;    // clear event flag
+        }
     }
 }
