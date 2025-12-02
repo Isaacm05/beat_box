@@ -1014,23 +1014,46 @@ void LCD_DrawPicture(u16 x0, u16 y0, const Picture* pic) {
 
 void LCD_PrintWaveMenu(int id, int freq, int amp, int decay, int dc_offset, int pitch_decay, int noise_mix, int env_curve, int comp_amount, int select)
 {
-    LCD_DrawFillRectangle(170, 9, 235, 215, COLOR_WHITE);
+    LCD_DrawFillRectangle(170, 9, 235, 235, COLOR_WHITE);
 
     // characteristics string
     char settings_str[100];
     char settings_str_2[100];
 
-    if (select)
+    printf("index: %d \n", select);
+
+    if (select == 0 || select == 4)
     {
-        sprintf(settings_str, "Freq: %d | Amp: %d", freq, amp);
-        sprintf(settings_str_2, "Dec: %d | Off: %d", decay, dc_offset);
+        LCD_DrawRectangle( 195, 55, 210, 110, COLOR_BLACK);
+    }
+    if (select == 1 )
+    {
+        LCD_DrawRectangle( 195, 165, 210, 220, COLOR_BLACK);
+    }
+    if ( select == 5)
+    {
+        LCD_DrawRectangle( 195, 180, 210, 230, COLOR_BLACK);
+    }
+    if(select == 2 || select == 6)
+    {
+        LCD_DrawRectangle( 175, 50, 190, 110, COLOR_BLACK);
+    }
+    if (select == 3 || select == 7)
+    {
+        LCD_DrawRectangle( 175, 165, 190, 220, COLOR_BLACK);
+    }
+
+    if (select <=3)
+    {
+        sprintf(settings_str, "Freq: %-6d | Amp: %-6d", freq, amp);
+        sprintf(settings_str_2, "Dec: %-7d | Off: %-6d", decay, dc_offset);
         LCD_DrawString(195, 11, COLOR_BLACK, COLOR_BLACK, settings_str, 16, 1, 1);
         LCD_DrawString(175, 11, COLOR_BLACK, COLOR_BLACK, settings_str_2, 16, 1, 1);
     }
     else
     {
-        sprintf(settings_str, "Pitch: %d | Noise: %d", freq, noise_mix);
-        sprintf(settings_str_2, "Env: %d | Comp: %d", env_curve, comp_amount);
+        sprintf(settings_str, "Pitch: %-5d | Noise: %d", freq, noise_mix);
+        sprintf(settings_str_2, "Env: %-7d | Comp: %d", env_curve, comp_amount);
         LCD_DrawString(195, 11, COLOR_BLACK, COLOR_BLACK, settings_str, 16, 1, 1);
         LCD_DrawString(175, 11, COLOR_BLACK, COLOR_BLACK, settings_str_2, 16, 1, 1);
     }
