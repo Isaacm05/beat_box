@@ -107,14 +107,10 @@ void led_matrix_refresh(void) { // edited version
             uint8_t b1 = framebuffer[row][col][2] ? 1 : 0;
 
             // Lower half (row + 32)
-            uint8_t r2 = framebuffer[row + SCAN_ROWS/2][col][0] ? 1 : 0;
-            uint8_t g2 = framebuffer[row + SCAN_ROWS/2][col][1] ? 1 : 0;
-            uint8_t b2 = framebuffer[row + SCAN_ROWS/2][col][2] ? 1 : 0;
+            uint8_t r2 = framebuffer[row + SCAN_ROWS][col][0] ? 1 : 0;
+            uint8_t g2 = framebuffer[row + SCAN_ROWS][col][1] ? 1 : 0;
+            uint8_t b2 = framebuffer[row + SCAN_ROWS][col][2] ? 1 : 0;
 
-            if (b2 || b1)
-            {
-                printf("adding a pixel\n");
-            }
 
             // Drive RGB pins
             gpio_put(PIN_R1, r1);
@@ -145,6 +141,7 @@ void led_matrix_refresh(void) { // edited version
 
 void led_matrix_set_pixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b) {
     if (x < MATRIX_WIDTH && y < MATRIX_HEIGHT) {
+        // y=y-1;
         framebuffer[y][x][0] = r;
         framebuffer[y][x][1] = g;
         framebuffer[y][x][2] = b;

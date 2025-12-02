@@ -22,9 +22,13 @@ int main() {
 
     printf("fill blue\n");
 
-    // led_matrix_fill(0, 0, 255);
-
-    led_matrix_set_pixel(10, 10, 0, 0, 255);
+    //led_matrix_fill(0, 0, 255);
+    // for(int i = 0; i < 20; i++)
+    // {
+    //     for(int j = 0; j < 20; j++)
+    //         led_matrix_set_pixel(i, j, 0, 0, 255);
+    // }
+    led_matrix_set_pixel(0, 35, 0, 0, 255);
     
     while(true)
         led_matrix_refresh();
@@ -45,7 +49,7 @@ int main() {
     // led_matrix_fill(255, 0, 0);  // full R G B
     // sleep_ms(2000);
     // led_matrix_refresh();
-    clock_t start_time = clock();
+    //clock_t start_time = clock();
 
     
     // while (true) {
