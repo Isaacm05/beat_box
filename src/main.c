@@ -6,6 +6,22 @@
 #define TARGET_FPS 60
 #define FRAME_TIME_US (1000000 / TARGET_FPS)
 #define COLOR_CHANGE_INTERVAL_US 1000000 // 1 second
+#define DEBOUNCE_US      30000     // 30 ms debounce
+#define LONG_PRESS_US   400000     // 400 ms for long-press
+
+const uint BUTTON_PINS[4] = {
+    PIN_LEFT,
+    PIN_RIGHT,
+    PIN_UP,
+    PIN_DOWN
+};
+
+enum Button {
+    BUTTON_LEFT = 0,
+    BUTTON_RIGHT = 1,
+    BUTTON_UP = 2,
+    BUTTON_DOWN = 3
+};
 
 const uint8_t colors[][3] = {
         {255,   0,   0},  // Red
@@ -18,21 +34,6 @@ const uint8_t colors[][3] = {
         {  0,   0,   0},  // Black
 };
 const int num_colors = 8;
-
-// active-low button test code 
-#define BUTTON_PIN 19
-volatile bool button_event = false;
-
-void button_init(void) {
-    gpio_init(BUTTON_PIN);
-    gpio_set_dir(BUTTON_PIN, GPIO_IN);
-    gpio_pull_up(BUTTON_PIN); 
-}
-
-bool button_pressed(void) {
-    return gpio_get(BUTTON_PIN) == 0; 
-}
-// end button test code
 
 
 // moving single pixel scan test
@@ -185,10 +186,78 @@ void vertical_fade(void) {
 
 }
 
+
+// button code
+void buttons_init(void) {
+    for (int i = 0; i < 4; i++) {
+        gpio_init(BUTTON_PINS[i]);
+        gpio_set_dir(BUTTON_PINS[i], GPIO_IN);
+        gpio_pull_up(BUTTON_PINS[i]);  // active LOW
+    }
+}
+
+volatile bool button_short_press[4] = {0};
+volatile bool button_long_press[4]  = {0};
+
+volatile bool button_raw_event[4] = {0};
+bool last_raw_state[4]            = {0};
+bool stable_state[4]              = {0};
+uint64_t last_change_time[4]      = {0};
+uint64_t press_start_time[4]      = {0};
+
+
 // button interrupt service routine
 void button_isr(uint gpio, uint32_t events) {
-    button_event = true;
+    for (int i = 0; i < 4; i++) {
+        if (gpio == BUTTON_PINS[i]) {
+            button_raw_event[i] = true;
+            last_change_time[i] = time_us_64();  
+        }
+    }
 }
+
+// process button state with debounce
+void process_button(int b) {
+    uint64_t now = time_us_64();
+
+    // Raw event from ISR?
+    if (button_raw_event[b]) {
+        button_raw_event[b] = false;  
+        // actual debounce happens below
+    }
+
+    bool raw = (gpio_get(BUTTON_PINS[b]) == 0);
+
+    // Detect changes in raw signal
+    if (raw != last_raw_state[b]) {
+        last_raw_state[b] = raw;
+        last_change_time[b] = now;
+    }
+
+    // Not yet debounced
+    if (now - last_change_time[b] < DEBOUNCE_US)
+        return;
+
+    // State is debounced & stable
+    if (raw != stable_state[b]) {
+        stable_state[b] = raw;
+
+        if (stable_state[b]) {
+            // PRESSED
+            press_start_time[b] = now;
+        } else {
+            // RELEASED — measure duration
+            uint64_t press_len = now - press_start_time[b];
+
+            if (press_len >= LONG_PRESS_US) {
+                button_long_press[b] = true;
+            } else {
+                button_short_press[b] = true;
+            }
+        }
+    }
+}
+
 
 
 // general main function template
@@ -212,49 +281,69 @@ void button_isr(uint gpio, uint32_t events) {
 }
 */
 
-
-// main - simple color fill with button interrupt to change color
+// main() — combines LED color cycling + 4-button debounce
 int main() {
     stdio_init_all();
     sleep_ms(2000);
 
     led_matrix_init();
+    buttons_init();
 
-    button_init();
-    // Clear any previous IRQ
-    gpio_set_irq_enabled_with_callback(BUTTON_PIN, GPIO_IRQ_EDGE_FALL, true, &button_isr);
-
+    // Install shared ISR for all buttons
+    for (int i = 0; i < 4; i++) {
+        gpio_set_irq_enabled_with_callback(
+            BUTTON_PINS[i],
+            GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE,   // detect press + release
+            true,
+            &button_isr
+        );
+    }
 
     int current_color = 0;
-    // Initial fill
+
+    // Fill the initial color
     led_matrix_fill(colors[current_color][0],
                     colors[current_color][1],
                     colors[current_color][2]);
 
-    uint64_t last_press_time = 0;
-
+    
     while (1) {
-        led_matrix_refresh();
 
-        if (button_event) {
-            uint64_t now = time_us_64();
+        led_matrix_refresh();   
 
-            // debounce check
-            if (now - last_press_time > 100000) {
-                last_press_time = now;
+        // Process debouncing + edge detection for all 4 buttons
+        for (int b = 0; b < 4; b++) {
+            process_button(b);
+        }
 
-                // next color
-                current_color = (current_color + 1) % num_colors;
+        // LEFT = previous color
+        if (button_short_press[BUTTON_LEFT]) {
+            button_short_press[BUTTON_LEFT] = false;  // clear flag
 
-                led_matrix_fill(colors[current_color][0],
-                                colors[current_color][1],
-                                colors[current_color][2]);
-            }
+            current_color--;
+            if (current_color < 0)
+                current_color = num_colors - 1;
 
-            printf("Color changed to: Color %d\n", current_color + 1);
+            led_matrix_fill(colors[current_color][0],
+                            colors[current_color][1],
+                            colors[current_color][2]);
 
-            // clear flag
-            button_event = false;  
+            printf("Color changed to: Color %d (LEFT short press)\n",
+                   current_color + 1);
+        }
+
+        // RIGHT = next color
+        if (button_short_press[BUTTON_RIGHT]) {
+            button_short_press[BUTTON_RIGHT] = false;
+
+            current_color = (current_color + 1) % num_colors;
+
+            led_matrix_fill(colors[current_color][0],
+                            colors[current_color][1],
+                            colors[current_color][2]);
+
+            printf("Color changed to: Color %d (RIGHT short press)\n",
+                   current_color + 1);
         }
     }
 }

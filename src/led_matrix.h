@@ -35,6 +35,12 @@
 
 #define COLOR_DEPTH 8
 
+#define PIN_LEFT   27
+#define PIN_RIGHT  28
+#define PIN_UP     29
+#define PIN_DOWN   30
+
+
 // Framebuffer (RGB888 format)
 extern uint8_t framebuffer[MATRIX_HEIGHT][MATRIX_WIDTH][3];
 

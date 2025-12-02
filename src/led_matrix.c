@@ -292,7 +292,7 @@ void led_matrix_refresh(void) {
             uint8_t g2 = framebuffer[row + SCAN_ROWS][col][1] ? 1 : 0;
             uint8_t b2 = framebuffer[row + SCAN_ROWS][col][2] ? 1 : 0;
 
-            // Set data pins - faster version, not tested yet
+            // Set data pins 
             uint32_t bits =
             (r1 << PIN_R1) |
             (g1 << PIN_G1) |
@@ -303,14 +303,6 @@ void led_matrix_refresh(void) {
 
             gpio_put_masked(RGB_MASK, bits);
 
-            // set data pins old version
-            // gpio_put(PIN_R1, r1);
-            // gpio_put(PIN_G1, g1);
-            // gpio_put(PIN_B1, b1);
-            // gpio_put(PIN_R2, r2);
-            // gpio_put(PIN_G2, g2);
-            // gpio_put(PIN_B2, b2);
-
             clock_pulse();
         }
 
@@ -319,7 +311,7 @@ void led_matrix_refresh(void) {
 
         // Turn the row pair ON for some time 
         gpio_put(PIN_OE, 0);
-        sleep_us(445);   // lower = less bright, less flicker. higher = more bright, more flicker
+        sleep_us(100);
     }
 }
 
