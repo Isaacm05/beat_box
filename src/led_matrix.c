@@ -55,8 +55,7 @@ static const uint8_t font3x5[][5] = {
     {0b111,0b001,0b010,0b100,0b111}, // Z
 };
 
-static void draw_char(int x, int y, char c,
-                            uint8_t r, uint8_t g, uint8_t b)
+static void draw_char(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b)
 {
     int index;
 
@@ -67,15 +66,12 @@ static void draw_char(int x, int y, char c,
         index = 1;
     }
     else if (c >= '0' && c <= '9') {
-        // digits start at index 2
         index = 2 + (c - '0');
     }
     else if (c >= 'A' && c <= 'Z') {
-        // letters start at index 12
         index = 12 + (c - 'A');
     }
     else {
-        // unsupported character
         return;
     }
 
@@ -85,7 +81,6 @@ static void draw_char(int x, int y, char c,
     for (int row = 0; row < 5; row++) {
         uint8_t bits = glyph[row];
         for (int col = 0; col < 3; col++) {
-            // bits are in the low 3 bits of the byte
             if (bits & (1 << (2 - col))) {
                 led_matrix_set_pixel(x + col, y + row, r, g, b);
             }

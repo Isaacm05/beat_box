@@ -117,6 +117,32 @@ void process_button(int b) {
     }
 }
 
+// draw grid for tracks
+void draw_grid(int num_tracks) {
+    int grid_x = 15;      // left side of grid
+    int grid_y = 21;      // below title
+    int cell_w = 3;
+    int cell_h = 3;
+    int spacing = 1;
+
+    // grid cells
+    for (int row = 0; row < num_tracks; row++) {
+        for (int col = 0; col < 12; col++) {
+
+            int x = grid_x + col * (cell_w + spacing);
+            int y = grid_y + row * (cell_h + 7*spacing);
+
+            // white outline
+            led_matrix_draw_rect(x, y, cell_w, cell_h,
+                                 200, 200, 200);
+
+            // black fill
+            led_matrix_fill_rect(x+1, y+1, cell_w-2, cell_h-2,
+                                 0, 0, 0);
+        }
+    }
+}
+
 // draw UI menu 
 void draw_menu(int selected) {
     led_matrix_clear();
@@ -133,37 +159,35 @@ void draw_menu(int selected) {
     // bpm box
     int bpm_x = 4;
     int bpm_y = 9;    
-    int bpm_w = 17;
+    int bpm_w = 15;
     int bpm_h = 7;     
 
     led_matrix_fill_rect(bpm_x, bpm_y, bpm_w, bpm_h,
                           0, 255, 255);  // blue fill
-    led_matrix_draw_text(bpm_x + 3, bpm_y + 1, "BPM", 0, 0, 0);
+    led_matrix_draw_text(bpm_x + 2, bpm_y + 1, "BPM", 0, 0, 0);
 
 
     // track numbers
     int box_x = 4;
     int box_y_start = 19;
-    int box_w = 9;
+    int box_w = 7;
     int box_h = 7;
     int spacing = 3;
 
     const char *labels[4] = { "1", "2", "3", "4" };
 
     for (int i = 0; i < num_tracks; i++) {
-    int y = box_y_start + i * (box_h + spacing);
+        int y = box_y_start + i * (box_h + spacing);
 
-    led_matrix_fill_rect(box_x, y, box_w, box_h,
-                         255, 255, 255);
+        led_matrix_fill_rect(box_x, y, box_w, box_h, 255, 255, 255);
+        led_matrix_draw_text(box_x + 2, y + 1, labels[i], 0, 0, 0);
 
-    led_matrix_draw_text(box_x + 3, y + 1, labels[i], 0, 0, 0);
-
-    if (selected == i) {
-        led_matrix_draw_rect(box_x - 1, y - 1,
-                             box_w + 2, box_h + 2,
-                             0, 255, 0);
+        if (selected == i) 
+            led_matrix_draw_rect(box_x - 1, y - 1, box_w + 2, box_h + 2, 0, 255, 0);
     }
-    }
+
+    draw_grid(num_tracks);
+
 }
 
 
@@ -226,8 +250,6 @@ int main() {
 
         if (num_tracks < 4) {
             num_tracks++;
-
-            // jump cursor to new track
             selected_track = num_tracks - 1;
         }
 
@@ -242,7 +264,6 @@ int main() {
         if (num_tracks > 1) {
             num_tracks--;
 
-            // If cursor is past end, pull it back to last track
             if (selected_track >= num_tracks) {
                 selected_track = num_tracks - 1;
             }
