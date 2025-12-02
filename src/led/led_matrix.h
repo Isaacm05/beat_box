@@ -12,26 +12,26 @@
 #define SCAN_ROWS 32 // 64 / 2, panel is 1/32 scan
 
 // RGB Data pins - Upper half (directly consecutive for PIO)
-#define PIN_R1 5
-#define PIN_G1 6
-#define PIN_B1 7
+#define PIN_R1 2
+#define PIN_G1 3
+#define PIN_B1 4
 
 // RGB Data pins - Lower half
-#define PIN_R2 8
-#define PIN_G2 9
-#define PIN_B2 10
+#define PIN_R2 5
+#define PIN_G2 6
+#define PIN_B2 7
 
 // Row address pins
-#define PIN_A 11
-#define PIN_B 12
-#define PIN_C 13
-#define PIN_D 14
-#define PIN_E 15
+#define PIN_A 8
+#define PIN_B 9
+#define PIN_C 10
+#define PIN_D 11
+#define PIN_E 12
 
 // Control pins
-#define PIN_CLK 16
-#define PIN_OE 17  
-#define PIN_LAT 18 
+#define PIN_CLK 13
+#define PIN_OE 14 
+#define PIN_LAT 15 
 
 
 #define COLOR_DEPTH 8

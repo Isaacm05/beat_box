@@ -1,5 +1,5 @@
 // led_matrix.c
-#include "led_matrix.h"
+#include "led/led_matrix.h"
 #include <string.h>
 
 uint8_t framebuffer[MATRIX_HEIGHT][MATRIX_WIDTH][3];
@@ -78,58 +78,70 @@ static inline void set_row_address(uint8_t row) {
 
 static inline void clock_pulse(void) {
     gpio_put(PIN_CLK, 1);
+    sleep_us(5); // brief delay
     gpio_put(PIN_CLK, 0);
 }
 
 static inline void latch_pulse(void) {
     gpio_put(PIN_LAT, 1);
+    sleep_us(5); // brief delay
     gpio_put(PIN_LAT, 0);
 }
 
-void led_matrix_refresh(void) {
-    // Binary Code Modulation for color depth
-    for (int bit = 0; bit < COLOR_DEPTH; bit++) {
-        uint8_t bit_mask = 1 << bit;
+void led_matrix_refresh(void) { // edited version
+    // Very simple: no PWM, no bit-planes.
+    // Just 1-bit on/off based on "nonzero" RGB values.
 
-        for (int row = 0; row < SCAN_ROWS; row++) {
-            // Disable output while shifting
-            gpio_put(PIN_OE, 1);
+    for (int row = 0; row < SCAN_ROWS; row++) {
+        // Turn display off while we update shift registers
+        // gpio_put(PIN_OE, 1); 
 
-            // Shift out pixel data for this row
-            for (int col = 0; col < MATRIX_WIDTH; col++) {
-                // Upper half pixel (row)
-                uint8_t r1 = (framebuffer[row][col][0] & bit_mask) ? 1 : 0;
-                uint8_t g1 = (framebuffer[row][col][1] & bit_mask) ? 1 : 0;
-                uint8_t b1 = (framebuffer[row][col][2] & bit_mask) ? 1 : 0;
+        // Select the row *before* latching
+        set_row_address(row);
 
-                // Lower half pixel (row + 32)
-                uint8_t r2 = (framebuffer[row + SCAN_ROWS][col][0] & bit_mask) ? 1 : 0;
-                uint8_t g2 = (framebuffer[row + SCAN_ROWS][col][1] & bit_mask) ? 1 : 0;
-                uint8_t b2 = (framebuffer[row + SCAN_ROWS][col][2] & bit_mask) ? 1 : 0;
+        // Shift out a full row of pixels
+        for (int col = 0; col < MATRIX_WIDTH; col++) {
+            // Upper half (row)
+            uint8_t r1 = framebuffer[row][col][0] ? 1 : 0;
+            uint8_t g1 = framebuffer[row][col][1] ? 1 : 0;
+            uint8_t b1 = framebuffer[row][col][2] ? 1 : 0;
 
-                // Set RGB pins
-                gpio_put(PIN_R1, r1);
-                gpio_put(PIN_G1, g1);
-                gpio_put(PIN_B1, b1);
-                gpio_put(PIN_R2, r2);
-                gpio_put(PIN_G2, g2);
-                gpio_put(PIN_B2, b2);
+            // Lower half (row + 32)
+            uint8_t r2 = framebuffer[row + SCAN_ROWS/2][col][0] ? 1 : 0;
+            uint8_t g2 = framebuffer[row + SCAN_ROWS/2][col][1] ? 1 : 0;
+            uint8_t b2 = framebuffer[row + SCAN_ROWS/2][col][2] ? 1 : 0;
 
-                // Clock in the pixel
-                clock_pulse();
+            if (b2 || b1)
+            {
+                printf("adding a pixel\n");
             }
 
-            // Set row address
-            set_row_address(row);
+            // Drive RGB pins
+            gpio_put(PIN_R1, r1);
+            gpio_put(PIN_G1, g1);
+            gpio_put(PIN_B1, b1);
+            gpio_put(PIN_R2, r2);
+            gpio_put(PIN_G2, g2);
+            gpio_put(PIN_B2, b2);
 
-            // Latch the data
-            latch_pulse();
-
-            gpio_put(PIN_OE, 0);
-            sleep_us((1 << bit) * 10); // 10x multiplier
+            // Clock this pixel into the shift registers
+            clock_pulse();
         }
+
+        // Latch the 64 pixels we just shifted for this row pair
+        gpio_put(PIN_OE, 1);
+
+        latch_pulse();
+
+        // Enable output so this row pair is visible
+        gpio_put(PIN_OE, 0);
+
+        // Simple fixed on-time per row — tune if needed
+        sleep_us(5);
     }
 }
+
+
 
 void led_matrix_set_pixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b) {
     if (x < MATRIX_WIDTH && y < MATRIX_HEIGHT) {
@@ -137,10 +149,25 @@ void led_matrix_set_pixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t 
         framebuffer[y][x][1] = g;
         framebuffer[y][x][2] = b;
     }
+
+    // for(int i = 0; i < 64; i++)
+    // {
+    //     for(int j = 0; j < 64; j++)
+    //     {
+    //         printf("%d ", framebuffer[i][j][2]);
+    //     }
+    //     printf("\n");
+    // }
 }
 
 void led_matrix_clear(void) {
-    memset(framebuffer, 0, sizeof(framebuffer));
+    for (int y = 0; y < MATRIX_HEIGHT; ++y) {
+        for (int x = 0; x < MATRIX_WIDTH; ++x) {
+            led_matrix_set_pixel(x, y, 0, 0, 0);
+        }
+    }
+    // Push the cleared buffer to the hardware
+    led_matrix_refresh();
 }
 
 void led_matrix_fill(uint8_t r, uint8_t g, uint8_t b) {
@@ -151,4 +178,5 @@ void led_matrix_fill(uint8_t r, uint8_t g, uint8_t b) {
             framebuffer[y][x][2] = b;
         }
     }
+
 }
