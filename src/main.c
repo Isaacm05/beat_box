@@ -2,7 +2,7 @@
 #include "pico/stdlib.h"
 #include <stdio.h>
 #include <time.h>
-
+ 
 #define TARGET_FPS 60
 #define FRAME_TIME_US (1000000 / TARGET_FPS)
 #define COLOR_CHANGE_INTERVAL_US 1000000 // 1 second
@@ -22,6 +22,16 @@ enum Button {
     BUTTON_UP = 2,
     BUTTON_DOWN = 3
 };
+
+volatile bool button_short_press[4] = {0};
+volatile bool button_long_press[4]  = {0};
+
+volatile bool button_raw_event[4] = {0};
+bool last_raw_state[4]            = {0};
+bool stable_state[4]              = {0};
+uint64_t last_change_time[4]      = {0};
+uint64_t press_start_time[4]      = {0};
+
 
 const uint8_t colors[][3] = {
         {255,   0,   0},  // Red
@@ -187,7 +197,7 @@ void vertical_fade(void) {
 }
 
 
-// button code
+// button initialization 
 void buttons_init(void) {
     for (int i = 0; i < 4; i++) {
         gpio_init(BUTTON_PINS[i]);
@@ -195,16 +205,6 @@ void buttons_init(void) {
         gpio_pull_up(BUTTON_PINS[i]);  // active LOW
     }
 }
-
-volatile bool button_short_press[4] = {0};
-volatile bool button_long_press[4]  = {0};
-
-volatile bool button_raw_event[4] = {0};
-bool last_raw_state[4]            = {0};
-bool stable_state[4]              = {0};
-uint64_t last_change_time[4]      = {0};
-uint64_t press_start_time[4]      = {0};
-
 
 // button interrupt service routine
 void button_isr(uint gpio, uint32_t events) {
@@ -257,29 +257,6 @@ void process_button(int b) {
         }
     }
 }
-
-
-
-// general main function template
-/*int main() {
-    stdio_init_all();
-    sleep_ms(2000);
-
-    printf("Initializing LED matrix...\n");
-    led_matrix_init();
-
-
-    // clear and then call a function
-    led_matrix_clear();
-    led_matrix_fill_circle(32, 32, 20, 255, 255, 255);
-
-
-    // infinite refresh loop 
-    while (1) { 
-        led_matrix_refresh();
-    }
-}
-*/
 
 // main() — combines LED color cycling + 4-button debounce
 int main() {

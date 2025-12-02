@@ -1,6 +1,6 @@
 #include "led_matrix.h"
 #include <string.h>
-
+ 
 uint8_t framebuffer[MATRIX_HEIGHT][MATRIX_WIDTH][3];
 
 #define RGB_MASK ((1u << PIN_R1) | (1u << PIN_G1) | (1u << PIN_B1) | \
