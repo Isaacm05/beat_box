@@ -12,13 +12,7 @@
 void test_single_pixel(uint16_t x, uint16_t y) {
     led_matrix_clear();
     led_matrix_set_pixel(x, y, 255, 0, 0); // red pixel
-
-    // Keep refreshing forever
-    while (1) {
-        led_matrix_refresh();
-    }
 }
-
 
 // 2) moving single pixel scan test
 void test_moving_pixel(void) {
@@ -37,7 +31,6 @@ void test_moving_pixel(void) {
         }
     }
 }
-
 
 // 3) full screen color cycle test
 void test_color_cycle(void) {
@@ -80,7 +73,6 @@ void test_color_cycle(void) {
     }
 }
 
-
 // 4) grid pattern test
 void test_grid_pattern(void) {
     led_matrix_clear();
@@ -97,13 +89,7 @@ void test_grid_pattern(void) {
                 led_matrix_set_pixel(x, y, 255, 255, 255);
         }
     }
-
-    // Display grid forever
-    while (1) {
-        led_matrix_refresh();
-    }
 }
-
 
 // 5) RGB stripes test
 void test_rgb_stripes(void) {
@@ -120,12 +106,7 @@ void test_rgb_stripes(void) {
                 led_matrix_set_pixel(x, y, 0, 0, 255);    // Blue stripe
         }
     }
-
-    while (1) {
-        led_matrix_refresh();
-    }
 }
-
 
 // 6) gradient test
 void test_gradient(void) {
@@ -142,12 +123,75 @@ void test_gradient(void) {
             led_matrix_set_pixel(x, y, r, g, b);
         }
     }
+}
 
-    while (1) {
-        led_matrix_refresh();
+// 7) horizontal fade test
+void test_horizontal_fade(void) {
+    // 4x4 ordered dithering matrix (Bayer matrix)
+    static const uint8_t bayer[4][4] = {
+        {  0,  8,  2, 10 },
+        { 12,  4, 14,  6 },
+        {  3, 11,  1,  9 },
+        { 15,  7, 13,  5 }
+    };
+
+    led_matrix_clear();
+
+    for (int y = 0; y < MATRIX_HEIGHT; y++) {
+        for (int x = 0; x < MATRIX_WIDTH; x++) {
+
+            // Intensity goes from 0–255 across the screen
+            uint8_t intensity = (x * 255) / (MATRIX_WIDTH - 1);
+
+            // Map to 0–15 to match the Bayer matrix range
+            uint8_t level = intensity >> 4;  // /16
+
+            // Using the 4×4 matrix
+            uint8_t threshold = bayer[y % 4][x % 4];
+
+            // ON if intensity level > matrix threshold
+            uint8_t value = (level > threshold) ? 255 : 0;
+
+            // White fade
+            led_matrix_set_pixel(x, y, value, value, value);
+        }
     }
 }
 
+// 8) vertical fade test
+void test_vertical_fade(void) {
+    // 4x4 ordered dithering matrix (Bayer matrix)
+    static const uint8_t bayer[4][4] = {
+        {  0,  8,  2, 10 },
+        { 12,  4, 14,  6 },
+        {  3, 11,  1,  9 },
+        { 15,  7, 13,  5 }
+    };
+
+    led_matrix_clear();
+
+    for (int y = 0; y < MATRIX_HEIGHT; y++) {
+
+        // Intensity goes 0–255 from top to bottom
+        uint8_t intensity = (y * 255) / (MATRIX_HEIGHT - 1);
+
+        // Scale intensity 0–255 → 0–15
+        uint8_t level = intensity >> 4;
+
+        for (int x = 0; x < MATRIX_WIDTH; x++) {
+
+            // Lookup threshold based on pixel location
+            uint8_t threshold = bayer[y % 4][x % 4];
+
+            // Decide whether this pixel is ON or OFF
+            uint8_t value = (level > threshold) ? 255 : 0;
+
+            // Draw vertical grayscale fade
+            led_matrix_set_pixel(x, y, value, value, value);
+        }
+    }
+
+}
 
 
 // main - set up to run any one of the tests
@@ -182,7 +226,15 @@ int main() {
     // 7. Text rendering test
     //test_text();
 
+    // 8. Horizontal fade 
+    //test_horizontal_fade();
 
-    // Should never reach here
-    while (1) { }
+    // 9. Vertical fade 
+    //test_vertical_fade();
+
+
+    // infinite refresh loop
+    while (true) { 
+        led_matrix_refresh();
+    }
 }
