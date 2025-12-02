@@ -40,17 +40,12 @@ int main() {
     // Generate and display initial waveform
     waveform_generate(pwm_buf, MAX_SAMPLES, &adc_buffer);
     waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer);
-    int select;
-    if (idx <= 3) {
-        select = 1;
-    } else if (idx <= 7) {
-        select = 0;
-    }
+
     LCD_PrintWaveMenu(adc_buffer.waveform_id, (int) adc_buffer.frequency,
                       (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
                       (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
                       (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
-                      (int) (adc_buffer.comp_amount * 100), select);
+                      (int) (adc_buffer.comp_amount * 100), idx);
     LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
 
     for (;;) {
@@ -60,19 +55,15 @@ int main() {
 
         if (update_lcd_params) {
             update_lcd_params = false;
-            if (idx <= 3) {
-                select = 1;
-            } else if (idx <= 7) {
-                select = 0;
-            }
+            
             LCD_PrintWaveMenu(
                 adc_buffer.waveform_id, (int) adc_buffer.frequency,
                 (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
                 (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
                 (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
-                (int) (adc_buffer.comp_amount * 100), select);
+                (int) (adc_buffer.comp_amount * 100), idx);
         }
-        if (params_updated) {
+        if (params_updated || menu_updated) {
             // Regenerate waveform with new parameters
             waveform_generate(pwm_buf, MAX_SAMPLES, &adc_buffer);
             waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer); // Generate float version for
@@ -81,20 +72,16 @@ int main() {
 
             // LCD_DrawFillRectangle(11, 60, 319, 239, BLACK);
 
-            if (idx <= 3) {
-                select = 1;
-            } else if (idx <= 7) {
-                select = 0;
-            }
             LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
             LCD_PrintWaveMenu(
                 adc_buffer.waveform_id, (int) adc_buffer.frequency,
                 (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
                 (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
                 (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
-                (int) (adc_buffer.comp_amount * 100), select);
+                (int) (adc_buffer.comp_amount * 100), idx);
 
             params_changed = true;
+            menu_updated = false;
             last_edit_time = current_time;
         }
 
