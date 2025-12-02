@@ -44,4 +44,6 @@ void led_matrix_refresh(void);
 void led_matrix_set_pixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b);
 void led_matrix_clear(void);
 void led_matrix_fill(uint8_t r, uint8_t g, uint8_t b);
+void led_matrix_draw_text(int x, int y, const char *text, uint8_t r, uint8_t g, uint8_t b);
+
 #endif

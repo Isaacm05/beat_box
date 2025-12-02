@@ -193,6 +193,12 @@ void test_vertical_fade(void) {
 
 }
 
+// 9) text rendering test
+void test_text_display() {
+    led_matrix_clear();
+    led_matrix_draw_text(10, 10, "HELLO!!", 255, 255, 255);
+}
+
 
 // main - set up to run any one of the tests
 int main() {
@@ -222,15 +228,15 @@ int main() {
     // 6. Gradient test
     // this one doesn't really work but looks cool
     //test_gradient();   
-    
-    // 7. Text rendering test
-    //test_text();
 
-    // 8. Horizontal fade 
+    // 7. Horizontal fade 
     //test_horizontal_fade();
 
-    // 9. Vertical fade 
+    // 8. Vertical fade 
     //test_vertical_fade();
+
+    // 9. Text rendering test
+    test_text_display();
 
 
     // infinite refresh loop
