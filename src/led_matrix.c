@@ -55,6 +55,40 @@ static const uint8_t font5x7[][5] = {
     {0x61,0x51,0x49,0x45,0x43}, // Z
 };
 
+// Convert HSV (0–255 each) into RGB (0–255 each)
+static void hsv_to_rgb(uint8_t h, uint8_t s, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b)
+{
+    uint8_t region, remainder, p, q, t;
+
+    if (s == 0) {
+        *r = v;
+        *g = v;
+        *b = v;
+        return;
+    }
+
+    region = h / 43;            // 256 / 6 = approx 43 per region
+    remainder = (h - (region * 43)) * 6;
+
+    p = (v * (255 - s)) >> 8;
+    q = (v * (255 - ((s * remainder) >> 8))) >> 8;
+    t = (v * (255 - ((s * (255 - remainder)) >> 8))) >> 8;
+
+    switch (region) {
+        case 0:
+            *r = v; *g = t; *b = p; break;
+        case 1:
+            *r = q; *g = v; *b = p; break;
+        case 2:
+            *r = p; *g = v; *b = t; break;
+        case 3:
+            *r = p; *g = q; *b = v; break;
+        case 4:
+            *r = t; *g = p; *b = v; break;
+        default:
+            *r = v; *g = p; *b = q; break;
+    }
+}
 
 static void draw_char(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b)
 {
@@ -95,6 +129,176 @@ void led_matrix_draw_text(int x, int y, const char *text, uint8_t r, uint8_t g, 
     for (int i = 0; text[i] != '\0'; i++) {
         draw_char(cursor_x, y, text[i], r, g, b);
         cursor_x += 6;   // 5px glyph + 1px spacing
+    }
+}
+
+void led_matrix_scroll_text(const char *text, int y, uint8_t r, uint8_t g, uint8_t b, int speed_us)
+{
+    // Compute pixel width of the entire string
+    int text_length = 0;
+    for (const char *p = text; *p; p++)
+        text_length++;
+
+    int text_width = text_length * 6;  // 5px glyph + 1px spacing
+
+    // Start from the right edge of the screen
+    int x_offset = MATRIX_WIDTH;
+
+    while (1) {
+        led_matrix_clear();
+
+        int cursor_x = x_offset;
+
+        // Draw characters shifted by x_offset
+        for (int i = 0; text[i] != '\0'; i++) {
+
+            char c = text[i];
+
+            // Convert to uppercase (your font only supports uppercase)
+            if (c >= 'a' && c <= 'z')
+                c -= 32;
+
+            // Skip unsupported chars
+            if (!((c == ' ') || (c == '!') ||
+                  (c >= '0' && c <= '9') ||
+                  (c >= 'A' && c <= 'Z'))) {
+                cursor_x += 6;
+                continue;
+            }
+
+            draw_char(cursor_x, y, c, r, g, b);
+            cursor_x += 6;
+        }
+
+        // Refresh panel
+        led_matrix_refresh();
+
+        // Move text left 1 pixel
+        x_offset--;
+
+        // Restart scroll if the text is fully off-screen
+        if (x_offset + text_width < 0) {
+            x_offset = MATRIX_WIDTH;
+        }
+
+        // Control scroll speed
+        sleep_us(speed_us);
+    }
+}
+
+void led_matrix_draw_text_rainbow(int x, int y, const char *text) {
+    // Discrete 7-color rainbow palette (fits 1-bit-per-channel output)
+    static const uint8_t rainbow[][3] = {
+        {255,   0,   0}, // Red
+        {255, 255,   0}, // Yellow (R+G)
+        {  0, 255,   0}, // Green
+        {  0, 255, 255}, // Cyan (G+B)
+        {  0,   0, 255}, // Blue
+        {255,   0, 255}, // Magenta (R+B)
+        {255, 255, 255}, // White
+    };
+    const int num_colors = 7;
+
+    int cursor_x = x;
+    int i = 0;
+
+    while (*text) {
+        char c = *text++;
+
+        // Force uppercase so it matches your font
+        if (c >= 'a' && c <= 'z') {
+            c -= 32;
+        }
+
+        // Skip unsupported chars but still advance position
+        if (!((c == ' ') || (c == '!') ||
+              (c >= '0' && c <= '9') ||
+              (c >= 'A' && c <= 'Z'))) {
+            cursor_x += 6;
+            continue;
+        }
+
+        uint8_t r = rainbow[i % num_colors][0];
+        uint8_t g = rainbow[i % num_colors][1];
+        uint8_t b = rainbow[i % num_colors][2];
+
+        draw_char(cursor_x, y, c, r, g, b);
+
+        cursor_x += 6;  // 5px glyph + 1px spacing
+        i++;
+    }
+}
+
+void led_matrix_scroll_text_rainbow(const char *text, int speed_us)
+{
+    // Same 7-color rainbow palette
+    static const uint8_t rainbow[][3] = {
+        {255,   0,   0}, // Red
+        {255, 255,   0}, // Yellow
+        {  0, 255,   0}, // Green
+        {  0, 255, 255}, // Cyan
+        {  0,   0, 255}, // Blue
+        {255,   0, 255}, // Magenta
+        {255, 255, 255}, // White
+    };
+    const int num_colors = 7;
+
+    // Compute full pixel width of the text
+    int text_length = 0;
+    for (const char *p = text; *p; p++) text_length++;
+    int text_width = text_length * 6;   // 5 pixels + 1 space
+
+    // Start off-screen to the right
+    int x_offset = MATRIX_WIDTH;
+
+    while (1) {
+        led_matrix_clear();
+
+        int cursor_x = x_offset;
+        int color_i = 0;
+
+        // Draw each character shifted by x_offset
+        for (int i = 0; text[i] != '\0'; i++) {
+
+            char c = text[i];
+
+            // Convert to uppercase so your font matches
+            if (c >= 'a' && c <= 'z')
+                c -= 32;
+
+            // Skip unsupported characters
+            if (!((c == ' ') || (c == '!') ||
+                  (c >= '0' && c <= '9') ||
+                  (c >= 'A' && c <= 'Z'))) {
+                cursor_x += 6;
+                continue;
+            }
+
+            // Pick a rainbow color
+            uint8_t r = rainbow[color_i % num_colors][0];
+            uint8_t g = rainbow[color_i % num_colors][1];
+            uint8_t b = rainbow[color_i % num_colors][2];
+
+            // Draw character at the shifted pos
+            draw_char(cursor_x, 20, c, r, g, b);
+
+            cursor_x += 6;
+            color_i++;
+        }
+
+        // Refresh panel
+        led_matrix_refresh();
+
+        // Move left 1 pixel
+        x_offset--;
+
+        // If fully off-screen, restart
+        if (x_offset + text_width < 0) {
+            x_offset = MATRIX_WIDTH;
+        }
+
+        // Control scroll speed
+        sleep_us(speed_us);
     }
 }
 
@@ -176,12 +380,11 @@ void led_matrix_refresh(void) {
 
         // 5) Turn the row pair ON for some time (brightness)
         gpio_put(PIN_OE, 0);
-        sleep_us(450);   // tweak between ~100–500 for brightness vs flicker
+        sleep_us(425);   // tweak between ~100–500 for brightness vs flicker
     }
 }
 
-void led_matrix_set_pixel(uint16_t x, uint16_t y,
-                          uint8_t r, uint8_t g, uint8_t b) {
+void led_matrix_set_pixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b) {
     if (x < MATRIX_WIDTH && y < MATRIX_HEIGHT) {
         framebuffer[y][x][0] = r;
         framebuffer[y][x][1] = g;
@@ -209,3 +412,94 @@ void led_matrix_fill(uint8_t r, uint8_t g, uint8_t b) {
     }
 }
 
+void led_matrix_draw_circle(int cx, int cy, int radius, uint8_t r, uint8_t g, uint8_t b)
+{
+    int x = radius;
+    int y = 0;
+    int decision = 1 - radius;
+
+    while (y <= x) {
+
+        // 8 symmetric circle points
+        led_matrix_set_pixel(cx + x, cy + y, r, g, b);
+        led_matrix_set_pixel(cx + y, cy + x, r, g, b);
+        led_matrix_set_pixel(cx - y, cy + x, r, g, b);
+        led_matrix_set_pixel(cx - x, cy + y, r, g, b);
+
+        led_matrix_set_pixel(cx - x, cy - y, r, g, b);
+        led_matrix_set_pixel(cx - y, cy - x, r, g, b);
+        led_matrix_set_pixel(cx + y, cy - x, r, g, b);
+        led_matrix_set_pixel(cx + x, cy - y, r, g, b);
+
+        y++;
+
+        if (decision <= 0) {
+            decision += 2*y + 1;
+        } else {
+            x--;
+            decision += 2*(y - x) + 1;
+        }
+    }
+}
+
+void led_matrix_fill_circle(int cx, int cy, int radius, uint8_t r, uint8_t g, uint8_t b)
+{
+    int x = radius;
+    int y = 0;
+    int decision = 1 - radius;
+
+    while (y <= x) {
+
+        // Draw horizontal spans for each symmetric circle slice
+        for (int i = cx - x; i <= cx + x; i++) {
+            led_matrix_set_pixel(i, cy + y, r, g, b);
+            led_matrix_set_pixel(i, cy - y, r, g, b);
+        }
+
+        for (int i = cx - y; i <= cx + y; i++) {
+            led_matrix_set_pixel(i, cy + x, r, g, b);
+            led_matrix_set_pixel(i, cy - x, r, g, b);
+        }
+
+        y++;
+
+        if (decision <= 0) {
+            decision += 2 * y + 1;
+        } else {
+            x--;
+            decision += 2 * (y - x) + 1;
+        }
+    }
+}
+
+void led_matrix_draw_rect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b)
+{
+    // Top horizontal line
+    for (int i = 0; i < w; i++) {
+        led_matrix_set_pixel(x + i, y, r, g, b);
+    }
+
+    // Bottom horizontal line
+    for (int i = 0; i < w; i++) {
+        led_matrix_set_pixel(x + i, y + h - 1, r, g, b);
+    }
+
+    // Left vertical line
+    for (int j = 0; j < h; j++) {
+        led_matrix_set_pixel(x, y + j, r, g, b);
+    }
+
+    // Right vertical line
+    for (int j = 0; j < h; j++) {
+        led_matrix_set_pixel(x + w - 1, y + j, r, g, b);
+    }
+}
+
+void led_matrix_fill_rect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b)
+{
+    for (int j = 0; j < h; j++) {
+        for (int i = 0; i < w; i++) {
+            led_matrix_set_pixel(x + i, y + j, r, g, b);
+        }
+    }
+}

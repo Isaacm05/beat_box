@@ -199,6 +199,46 @@ void test_text_display() {
     led_matrix_draw_text(10, 10, "HELLO!!", 255, 255, 255);
 }
 
+// 10) rainbow text test
+void test_rainbow_text() {
+    led_matrix_clear();
+    led_matrix_draw_text_rainbow(5, 10, "HELLO!!!");
+}
+
+// 11) scrolling text test
+void test_scrolling_text() {
+    led_matrix_scroll_text("HELLO WORLD", 20, 255,255,255,30000);  
+}
+
+// 12) scrolling rainbow text test
+void test_scrolling_rainbow_text() {
+    led_matrix_scroll_text_rainbow("HELLO WORLD", 30000);
+}
+
+// 13) circle drawing test
+void test_circle() {
+    led_matrix_clear();
+    led_matrix_draw_circle(32, 32, 20, 255, 255, 255); // center, radius, white
+}
+ 
+// 14) filled circle test
+void test_filled_circle() {
+    led_matrix_clear();
+    led_matrix_fill_circle(32, 32, 20, 255, 255, 255);
+}
+
+// 15) rectangle drawing test
+void test_rectangle() {
+    led_matrix_clear();
+    led_matrix_draw_rect(5, 5, 40, 20, 255, 255, 255);
+}
+
+// 16) filled rectangle test
+void test_fill_rectangle() {
+    led_matrix_clear();
+    led_matrix_fill_rect(20, 30, 15, 10, 255, 0, 0);
+}
+
 
 // main - set up to run any one of the tests
 int main() {
@@ -235,8 +275,29 @@ int main() {
     // 8. Vertical fade 
     //test_vertical_fade();
 
-    // 9. Text rendering test
-    test_text_display();
+    // 9. Text rendering test 5x7 font
+    //test_text_display();
+
+    // 10. Rainbow text test
+    //test_rainbow_text();
+
+    // 11. Scrolling text test
+    //test_scrolling_text();
+
+    // 12. Scrolling rainbow text test
+    //test_scrolling_rainbow_text();
+
+    // 13. Circle drawing test
+    //test_circle();
+
+    // 14. Filled circle test
+    //test_filled_circle();
+
+    // 15. Rectangle drawing test
+    //test_rectangle();
+
+    // 16. Filled rectangle test
+    //test_fill_rectangle();
 
 
     // infinite refresh loop

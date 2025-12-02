@@ -45,5 +45,12 @@ void led_matrix_set_pixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t 
 void led_matrix_clear(void);
 void led_matrix_fill(uint8_t r, uint8_t g, uint8_t b);
 void led_matrix_draw_text(int x, int y, const char *text, uint8_t r, uint8_t g, uint8_t b);
+void led_matrix_draw_text_rainbow(int x, int y, const char *text);
+void led_matrix_scroll_text(const char *text, int y, uint8_t r, uint8_t g, uint8_t b, int speed_us);
+void led_matrix_scroll_text_rainbow(const char *text, int speed_us);
+void led_matrix_draw_circle(int cx, int cy, int radius, uint8_t r, uint8_t g, uint8_t b);
+void led_matrix_fill_circle(int cx, int cy, int radius, uint8_t r, uint8_t g, uint8_t b);
+void led_matrix_draw_rect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b);
+void led_matrix_fill_rect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b);
 
 #endif
