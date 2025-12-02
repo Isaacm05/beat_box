@@ -3,11 +3,12 @@
 
 uint8_t framebuffer[MATRIX_HEIGHT][MATRIX_WIDTH][3];
 
+#define RGB_MASK ((1u << PIN_R1) | (1u << PIN_G1) | (1u << PIN_B1) | \
+                  (1u << PIN_R2) | (1u << PIN_G2) | (1u << PIN_B2))
 
-// 5x7 bitmap font
-// Only SPACE, ! , digits, and uppercase letters 
+
 static const uint8_t font5x7[][5] = {
-
+    // 5x7 font with SPACE, !, digits, A-Z
     // SPACE (index 0)
     {0x00,0x00,0x00,0x00,0x00},
 
@@ -291,12 +292,24 @@ void led_matrix_refresh(void) {
             uint8_t g2 = framebuffer[row + SCAN_ROWS][col][1] ? 1 : 0;
             uint8_t b2 = framebuffer[row + SCAN_ROWS][col][2] ? 1 : 0;
 
-            gpio_put(PIN_R1, r1);
-            gpio_put(PIN_G1, g1);
-            gpio_put(PIN_B1, b1);
-            gpio_put(PIN_R2, r2);
-            gpio_put(PIN_G2, g2);
-            gpio_put(PIN_B2, b2);
+            // Set data pins - faster version, not tested yet
+            uint32_t bits =
+            (r1 << PIN_R1) |
+            (g1 << PIN_G1) |
+            (b1 << PIN_B1) |
+            (r2 << PIN_R2) |
+            (g2 << PIN_G2) |
+            (b2 << PIN_B2);
+
+            gpio_put_masked(RGB_MASK, bits);
+
+            // set data pins old version
+            // gpio_put(PIN_R1, r1);
+            // gpio_put(PIN_G1, g1);
+            // gpio_put(PIN_B1, b1);
+            // gpio_put(PIN_R2, r2);
+            // gpio_put(PIN_G2, g2);
+            // gpio_put(PIN_B2, b2);
 
             clock_pulse();
         }
