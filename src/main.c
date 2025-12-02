@@ -53,6 +53,8 @@ uint64_t press_start_time[4]      = {0};
 int menu_index = 0;  // scrolls through tracks   
 int num_tracks = 1;     // min 1 track, max 4
 int selected_track = 0; 
+bool track_selected_mode = false;
+int selected_track_final = 0;  
 
 
 
@@ -188,6 +190,37 @@ void draw_menu(int selected) {
 
     draw_grid(num_tracks);
 
+    // add red rectangle if track selected
+    if (track_selected_mode) {
+
+        int box_x = 4;
+        int box_y_start = 19;
+        int box_w = 7;
+        int box_h = 7;
+        int spacing = 3;
+
+        int track_y = box_y_start + selected_track_final * (box_h + spacing);
+
+        int grid_x = 15;
+        int grid_y = 21;
+        int cell_w = 3;
+        int cell_h = 3;
+        int cell_spacing = 1;
+
+        int grid_row_y = grid_y + selected_track_final * (cell_h + 7 * cell_spacing);
+
+        int grid_width = 12 * (cell_w + cell_spacing) - cell_spacing;
+
+        // Rectangle boundaries
+        int select_x = box_x - 3;                    // start a little before track box
+        int select_y = track_y - 3;                  // top boundary
+        int select_w = (grid_x + grid_width) - select_x + 5;
+        int select_h = (grid_row_y + cell_h) - select_y + 5;
+
+        led_matrix_draw_rect(select_x, select_y, select_w, select_h,
+                             255, 0, 0);   // RED rectangle
+    }
+
 }
 
 
@@ -222,7 +255,7 @@ int main() {
     }
 
     // UP - moves select up
-    if (button_short_press[BUTTON_UP]) {
+    if (!track_selected_mode && button_short_press[BUTTON_UP]) {
         button_short_press[BUTTON_UP] = false;
 
         if (num_tracks > 0) {
@@ -234,8 +267,21 @@ int main() {
         }
     }
 
+    // UP - LONG press to select track
+    if (button_long_press[BUTTON_UP]) {
+        button_long_press[BUTTON_UP] = false;
+
+        // Enter selection mode
+        track_selected_mode = true;
+        selected_track_final = selected_track;
+
+        draw_menu(selected_track);
+        printf("Track %d selected (LONG UP)\n", selected_track_final + 1);
+    }
+
+
     // DOWN - moves select down
-    if (button_short_press[BUTTON_DOWN]) {
+    if (!track_selected_mode && button_short_press[BUTTON_DOWN]) {
         button_short_press[BUTTON_DOWN] = false;
 
         if (num_tracks > 0) {
@@ -243,6 +289,20 @@ int main() {
             draw_menu(selected_track);
         }
     }
+
+    // DOWN - LONG press to deselect track
+    if (button_long_press[BUTTON_DOWN]) {
+        button_long_press[BUTTON_DOWN] = false;
+
+        if (track_selected_mode) {
+            track_selected_mode = false;
+
+            draw_menu(selected_track);
+
+            printf("Track %d deselected (LONG DOWN)\n", selected_track_final + 1);
+        }
+    }
+
 
     // RIGHT - add track 
     if (button_short_press[BUTTON_RIGHT]) {
