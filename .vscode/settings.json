@@ -9,6 +9,7 @@
         "adc_potentiometer.h": "c",
         "lcd.h": "c",
         "presets.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "gpio.h": "c"
     }
 }

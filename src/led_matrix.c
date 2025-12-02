@@ -7,59 +7,59 @@ uint8_t framebuffer[MATRIX_HEIGHT][MATRIX_WIDTH][3];
                   (1u << PIN_R2) | (1u << PIN_G2) | (1u << PIN_B2))
 
 
-static const uint8_t font5x7[][5] = {
-    // 5x7 font with SPACE, !, digits, A-Z
-    // SPACE (index 0)
-    {0x00,0x00,0x00,0x00,0x00},
+static const uint8_t font3x5[][5] = {
+    // SPACE
+    {0b000,0b000,0b000,0b000,0b000},
 
-    // ! (index 1)
-    {0x00,0x00,0x5F,0x00,0x00},
+    // ! 
+    {0b010,0b010,0b010,0b000,0b010},
 
-    // digits (index 2 - 11)
-    {0x3E,0x51,0x49,0x45,0x3E}, // 0
-    {0x00,0x42,0x7F,0x40,0x00}, // 1
-    {0x42,0x61,0x51,0x49,0x46}, // 2
-    {0x21,0x41,0x45,0x4B,0x31}, // 3
-    {0x18,0x14,0x12,0x7F,0x10}, // 4
-    {0x27,0x45,0x45,0x45,0x39}, // 5
-    {0x3C,0x4A,0x49,0x49,0x30}, // 6
-    {0x01,0x71,0x09,0x05,0x03}, // 7
-    {0x36,0x49,0x49,0x49,0x36}, // 8
-    {0x06,0x49,0x49,0x29,0x1E}, // 9
+    // Digits 0–9
+    {0b111,0b101,0b101,0b101,0b111}, // 0
+    {0b010,0b110,0b010,0b010,0b111}, // 1
+    {0b111,0b001,0b111,0b100,0b111}, // 2
+    {0b111,0b001,0b111,0b001,0b111}, // 3
+    {0b101,0b101,0b111,0b001,0b001}, // 4
+    {0b111,0b100,0b111,0b001,0b111}, // 5
+    {0b111,0b100,0b111,0b101,0b111}, // 6
+    {0b111,0b001,0b001,0b001,0b001}, // 7
+    {0b111,0b101,0b111,0b101,0b111}, // 8
+    {0b111,0b101,0b111,0b001,0b111}, // 9
 
-    // A-Z (index 12 - 37)
-    {0x7E,0x11,0x11,0x11,0x7E}, // A
-    {0x7F,0x49,0x49,0x49,0x36}, // B
-    {0x3E,0x41,0x41,0x41,0x22}, // C
-    {0x7F,0x41,0x41,0x22,0x1C}, // D
-    {0x7F,0x49,0x49,0x49,0x41}, // E
-    {0x7F,0x09,0x09,0x09,0x01}, // F
-    {0x3E,0x41,0x49,0x49,0x7A}, // G
-    {0x7F,0x08,0x08,0x08,0x7F}, // H
-    {0x00,0x41,0x7F,0x41,0x00}, // I
-    {0x20,0x40,0x41,0x3F,0x01}, // J
-    {0x7F,0x08,0x14,0x22,0x41}, // K
-    {0x7F,0x40,0x40,0x40,0x40}, // L
-    {0x7F,0x02,0x0C,0x02,0x7F}, // M
-    {0x7F,0x04,0x08,0x10,0x7F}, // N
-    {0x3E,0x41,0x41,0x41,0x3E}, // O
-    {0x7F,0x09,0x09,0x09,0x06}, // P
-    {0x3E,0x41,0x51,0x21,0x5E}, // Q
-    {0x7F,0x09,0x19,0x29,0x46}, // R
-    {0x26,0x49,0x49,0x49,0x32}, // S
-    {0x01,0x01,0x7F,0x01,0x01}, // T
-    {0x3F,0x40,0x40,0x40,0x3F}, // U
-    {0x1F,0x20,0x40,0x20,0x1F}, // V
-    {0x7F,0x20,0x18,0x20,0x7F}, // W
-    {0x63,0x14,0x08,0x14,0x63}, // X
-    {0x03,0x04,0x78,0x04,0x03}, // Y
-    {0x61,0x51,0x49,0x45,0x43}, // Z
+    // A–Z
+    {0b111,0b101,0b111,0b101,0b101}, // A
+    {0b110,0b101,0b110,0b101,0b110}, // B
+    {0b111,0b100,0b100,0b100,0b111}, // C
+    {0b110,0b101,0b101,0b101,0b110}, // D
+    {0b111,0b100,0b111,0b100,0b111}, // E
+    {0b111,0b100,0b111,0b100,0b100}, // F
+    {0b111,0b100,0b101,0b101,0b111}, // G
+    {0b101,0b101,0b111,0b101,0b101}, // H
+    {0b111,0b010,0b010,0b010,0b111}, // I
+    {0b111,0b001,0b001,0b101,0b111}, // J
+    {0b101,0b110,0b100,0b110,0b101}, // K
+    {0b100,0b100,0b100,0b100,0b111}, // L
+    {0b101,0b111,0b111,0b101,0b101}, // M
+    {0b101,0b111,0b111,0b111,0b101}, // N
+    {0b111,0b101,0b101,0b101,0b111}, // O
+    {0b111,0b101,0b111,0b100,0b100}, // P
+    {0b111,0b101,0b101,0b111,0b001}, // Q
+    {0b111,0b101,0b111,0b101,0b101}, // R
+    {0b111,0b100,0b111,0b001,0b111}, // S
+    {0b111,0b010,0b010,0b010,0b010}, // T
+    {0b101,0b101,0b101,0b101,0b111}, // U
+    {0b101,0b101,0b101,0b101,0b010}, // V
+    {0b101,0b101,0b111,0b111,0b101}, // W
+    {0b101,0b101,0b010,0b101,0b101}, // X
+    {0b101,0b101,0b010,0b010,0b010}, // Y
+    {0b111,0b001,0b010,0b100,0b111}, // Z
 };
 
-static void draw_char(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b)
+static void draw_char(int x, int y, char c,
+                            uint8_t r, uint8_t g, uint8_t b)
 {
     int index;
-    // selects char from font5x7 array
+
     if (c == ' ') {
         index = 0;
     }
@@ -67,22 +67,26 @@ static void draw_char(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b)
         index = 1;
     }
     else if (c >= '0' && c <= '9') {
-        index = 2 + (c - '0');          
+        // digits start at index 2
+        index = 2 + (c - '0');
     }
     else if (c >= 'A' && c <= 'Z') {
-        index = 12 + (c - 'A');        
+        // letters start at index 12
+        index = 12 + (c - 'A');
     }
     else {
+        // unsupported character
         return;
     }
 
-    const uint8_t *glyph = font5x7[index];
+    const uint8_t *glyph = font3x5[index];
 
-    // fills in pixels for character
-    for (int col = 0; col < 5; col++) {
-        uint8_t bits = glyph[col];
-        for (int row = 0; row < 7; row++) {
-            if (bits & (1 << row)) {
+    // 3x5 font: 3 columns wide, 5 rows tall
+    for (int row = 0; row < 5; row++) {
+        uint8_t bits = glyph[row];
+        for (int col = 0; col < 3; col++) {
+            // bits are in the low 3 bits of the byte
+            if (bits & (1 << (2 - col))) {
                 led_matrix_set_pixel(x + col, y + row, r, g, b);
             }
         }
@@ -95,7 +99,7 @@ void led_matrix_draw_text(int x, int y, const char *text, uint8_t r, uint8_t g, 
 
     for (int i = 0; text[i] != '\0'; i++) {
         draw_char(cursor_x, y, text[i], r, g, b); // calls helper function
-        cursor_x += 6; // extra 1px for spacing
+        cursor_x += 4; // extra 1px for spacing
     }
 }
 
