@@ -1,15 +1,11 @@
-// #include "led/led_matrix.h"
-// #include "pico/stdlib.h"
-// #include <stdio.h>
-
-#define TARGET_FPS 60
-#define FRAME_TIME_US (1000000 / TARGET_FPS)
-
-
-#include "led/led_matrix.h"
+#include "led_matrix.h"
 #include "pico/stdlib.h"
 #include <stdio.h>
 #include <time.h>
+
+#define TARGET_FPS 60
+#define FRAME_TIME_US (1000000 / TARGET_FPS)
+#define COLOR_CHANGE_INTERVAL_US 1000000 // 1 second
 
 int main() {
     stdio_init_all();
@@ -18,88 +14,43 @@ int main() {
     printf("Initializing 64x64 LED Matrix...\n");
     led_matrix_init();
 
-    // Fill framebuffer with white
+    // Color cycle array: {R, G, B}
+    const uint8_t colors[][3] = {
+        {255, 0, 0},     // Red
+        {0, 255, 0},     // Green
+        {0, 0, 255},     // Blue
+        {255, 255, 0},   // Yellow
+        {255, 0, 255},   // Magenta
+        {0, 255, 255},   // Cyan
+        {255, 255, 255},  // White
+        {0, 0, 0,}       // Black
+    };
+    const int num_colors = 8;
+    int current_color = 0;
 
-    printf("fill blue\n");
+    uint64_t last_color_change = time_us_64();
 
-    //led_matrix_fill(0, 0, 255);
-    // for(int i = 0; i < 20; i++)
-    // {
-    //     for(int j = 0; j < 20; j++)
-    //         led_matrix_set_pixel(i, j, 0, 0, 255);
-    // }
-    led_matrix_set_pixel(0, 35, 0, 0, 255);
-    
-    while(true)
+    while (1) {
+        uint64_t current_time = time_us_64();
+        uint32_t start_time = time_us_32();
+
+        // Check if it's time to change color
+        if (current_time - last_color_change >= COLOR_CHANGE_INTERVAL_US) {
+            led_matrix_fill(colors[current_color][0], 
+                           colors[current_color][1], 
+                           colors[current_color][2]);
+            current_color = (current_color + 1) % num_colors;
+            last_color_change = current_time;
+            printf("Color: %d\n", current_color);
+        }
+
+        // Refresh the LED matrix
         led_matrix_refresh();
 
-    
-   
-
-
-    // //sleep_ms(2000);
-    // led_matrix_refresh();
-
-    // printf("clear");
-    // led_matrix_clear();
-    // sleep_ms(5000);
-    // led_matrix_refresh();
-
-    // printf("fill red");
-    // led_matrix_fill(255, 0, 0);  // full R G B
-    // sleep_ms(2000);
-    // led_matrix_refresh();
-    //clock_t start_time = clock();
-
-    
-    // while (true) {
-    //     //if ((clock() - start_time) / CLOCKS_PER_SEC >= 1) {
-    //         //start_time = clock();
-    //        // led_matrix_fill(0, 255, 0);
-
-    //     //}   
-        
-    //     // led_matrix_fill(255, 0, 0);
-    //     // led_matrix_refresh();
-    //     // led_matrix_fill(0, 255, 0);
-    //     // led_matrix_refresh();   
-    //     // led_matrix_fill(0, 0, 255);
-    //     led_matrix_refresh();
-    // }
+        // Frame timing
+        uint32_t elapsed = time_us_32() - start_time;
+        if (elapsed < FRAME_TIME_US) {
+            sleep_us(FRAME_TIME_US - elapsed);
+        }   
+    }
 }
-
-
-
-// int main() {
-//     stdio_init_all();
-//     sleep_ms(2000); // give USB serial time to enumerate
-
-//     printf("Initializing 64x64 LED Matrix...\n");
-//     led_matrix_init();
-
-//     // --- SET ENTIRE SCREEN TO WHITE ---
-//     for (int y = 0; y < MATRIX_HEIGHT; y++) {
-//         for (int x = 0; x < MATRIX_WIDTH; x++) {
-//             led_matrix_set_pixel(x, y, 255, 255, 255);  // full R G B
-//         }
-//     }
-
-//     printf("Screen set to WHITE. Starting refresh loop...\n");
-
-//     uint64_t last_frame_time = time_us_64();
-
-//     while (true) {
-//         uint64_t now = time_us_64();
-//         uint64_t elapsed = now - last_frame_time;
-
-//         // Push framebuffer to the panel
-//         led_matrix_refresh();
-
-//         // Hold framerate
-//         if (elapsed < FRAME_TIME_US) {
-//             sleep_us(FRAME_TIME_US - elapsed);
-//         }
-
-//         last_frame_time = time_us_64();
-//     }
-// }

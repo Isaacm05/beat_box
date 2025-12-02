@@ -30,8 +30,8 @@
 
 // Control pins
 #define PIN_CLK 13
-#define PIN_OE 14 
-#define PIN_LAT 15 
+#define PIN_OE 14
+#define PIN_LAT 15
 
 
 #define COLOR_DEPTH 8
