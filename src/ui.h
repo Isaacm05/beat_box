@@ -3,10 +3,13 @@
 
 #include <stdbool.h>
 
-// Initialize UI system (buttons, display initial state)
+// Initialize UI
 void ui_init(void);
 
-// Update UI (process buttons, handle state changes, selective redraw)
+// Update UI
 void ui_update(void);
+
+// Get current BPM value
+int ui_get_bpm(void);
 
 #endif // UI_H

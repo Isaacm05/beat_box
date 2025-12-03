@@ -1,6 +1,6 @@
 #ifndef LED_MATRIX_H
 #define LED_MATRIX_H
- 
+
 #include "hardware/gpio.h"
 #include "hardware/pio.h"
 #include "pico/stdlib.h"
@@ -32,16 +32,13 @@
 #define PIN_OE 14
 #define PIN_LAT 15
 
-
 #define COLOR_DEPTH 8
 
-#define PIN_LEFT   27
-#define PIN_RIGHT  28
-#define PIN_UP     29
-#define PIN_DOWN   30
+#define PIN_LEFT 29
+#define PIN_RIGHT 30
+#define PIN_UP 27
+#define PIN_DOWN 28
 
-
-// Framebuffer (RGB888 format)
 extern uint8_t framebuffer[MATRIX_HEIGHT][MATRIX_WIDTH][3];
 
 void led_matrix_init(void);
