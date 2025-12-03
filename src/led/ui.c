@@ -11,6 +11,9 @@
 #define DEBOUNCE_US 15000                // 15 ms debounce
 #define LONG_PRESS_US 400000             // 400 ms for long-press
 
+// Global UI vertical offset (moves everything down)
+#define UI_Y_OFFSET 5
+
 // button control vars
 #define PIN_SELECT 31
 
@@ -68,7 +71,7 @@ static int preset_cursor = 0;
 // Beat state for each track (true = filled/active)
 static bool beat_state[4][NUM_BEATS] = {0};
 
-// Track bp for change detect
+// Track bpm for change detect
 static int prev_bpm = 120;
 
 // Playback state
@@ -79,50 +82,50 @@ static uint64_t last_beat_time = 0;
 // Draw waveform preset icons
 static void draw_waveform(int x, int y, int preset_type, uint8_t r, uint8_t g, uint8_t b) {
     switch (preset_type) {
-        case 0: // Sine wave
-            led_matrix_set_pixel(x, y + 2, r, g, b);
-            led_matrix_set_pixel(x + 1, y + 1, r, g, b);
-            led_matrix_set_pixel(x + 2, y, r, g, b);
-            led_matrix_set_pixel(x + 3, y + 1, r, g, b);
-            led_matrix_set_pixel(x + 4, y + 2, r, g, b);
-            led_matrix_set_pixel(x + 5, y + 3, r, g, b);
-            led_matrix_set_pixel(x + 6, y + 4, r, g, b);
-            led_matrix_set_pixel(x + 7, y + 3, r, g, b);
-            led_matrix_set_pixel(x + 8, y + 2, r, g, b);
-            break;
-        case 1: // Triangle wave
-            led_matrix_set_pixel(x, y + 4, r, g, b);
-            led_matrix_set_pixel(x + 1, y + 3, r, g, b);
-            led_matrix_set_pixel(x + 2, y + 2, r, g, b);
-            led_matrix_set_pixel(x + 3, y + 1, r, g, b);
-            led_matrix_set_pixel(x + 4, y, r, g, b);
-            led_matrix_set_pixel(x + 5, y + 1, r, g, b);
-            led_matrix_set_pixel(x + 6, y + 2, r, g, b);
-            led_matrix_set_pixel(x + 7, y + 3, r, g, b);
-            led_matrix_set_pixel(x + 8, y + 4, r, g, b);
-            break;
-        case 2: // Square wave
-            led_matrix_set_pixel(x, y, r, g, b);
-            led_matrix_set_pixel(x + 1, y, r, g, b);
-            led_matrix_set_pixel(x + 2, y, r, g, b);
-            led_matrix_set_pixel(x + 3, y, r, g, b);
-            led_matrix_set_pixel(x + 4, y + 4, r, g, b);
-            led_matrix_set_pixel(x + 5, y + 4, r, g, b);
-            led_matrix_set_pixel(x + 6, y + 4, r, g, b);
-            led_matrix_set_pixel(x + 7, y + 4, r, g, b);
-            led_matrix_set_pixel(x + 8, y, r, g, b);
-            break;
-        case 3: // Noise
-            led_matrix_set_pixel(x, y + 1, r, g, b);
-            led_matrix_set_pixel(x + 1, y + 3, r, g, b);
-            led_matrix_set_pixel(x + 2, y, r, g, b);
-            led_matrix_set_pixel(x + 3, y + 4, r, g, b);
-            led_matrix_set_pixel(x + 4, y + 2, r, g, b);
-            led_matrix_set_pixel(x + 5, y, r, g, b);
-            led_matrix_set_pixel(x + 6, y + 3, r, g, b);
-            led_matrix_set_pixel(x + 7, y + 1, r, g, b);
-            led_matrix_set_pixel(x + 8, y + 4, r, g, b);
-            break;
+    case 0: // Sine wave
+        led_matrix_set_pixel(x, y + 2, r, g, b);
+        led_matrix_set_pixel(x + 1, y + 1, r, g, b);
+        led_matrix_set_pixel(x + 2, y, r, g, b);
+        led_matrix_set_pixel(x + 3, y + 1, r, g, b);
+        led_matrix_set_pixel(x + 4, y + 2, r, g, b);
+        led_matrix_set_pixel(x + 5, y + 3, r, g, b);
+        led_matrix_set_pixel(x + 6, y + 4, r, g, b);
+        led_matrix_set_pixel(x + 7, y + 3, r, g, b);
+        led_matrix_set_pixel(x + 8, y + 2, r, g, b);
+        break;
+    case 1: // Triangle wave
+        led_matrix_set_pixel(x, y + 4, r, g, b);
+        led_matrix_set_pixel(x + 1, y + 3, r, g, b);
+        led_matrix_set_pixel(x + 2, y + 2, r, g, b);
+        led_matrix_set_pixel(x + 3, y + 1, r, g, b);
+        led_matrix_set_pixel(x + 4, y, r, g, b);
+        led_matrix_set_pixel(x + 5, y + 1, r, g, b);
+        led_matrix_set_pixel(x + 6, y + 2, r, g, b);
+        led_matrix_set_pixel(x + 7, y + 3, r, g, b);
+        led_matrix_set_pixel(x + 8, y + 4, r, g, b);
+        break;
+    case 2: // Square wave
+        led_matrix_set_pixel(x, y, r, g, b);
+        led_matrix_set_pixel(x + 1, y, r, g, b);
+        led_matrix_set_pixel(x + 2, y, r, g, b);
+        led_matrix_set_pixel(x + 3, y, r, g, b);
+        led_matrix_set_pixel(x + 4, y + 4, r, g, b);
+        led_matrix_set_pixel(x + 5, y + 4, r, g, b);
+        led_matrix_set_pixel(x + 6, y + 4, r, g, b);
+        led_matrix_set_pixel(x + 7, y + 4, r, g, b);
+        led_matrix_set_pixel(x + 8, y, r, g, b);
+        break;
+    case 3: // Noise
+        led_matrix_set_pixel(x, y + 1, r, g, b);
+        led_matrix_set_pixel(x + 1, y + 3, r, g, b);
+        led_matrix_set_pixel(x + 2, y, r, g, b);
+        led_matrix_set_pixel(x + 3, y + 4, r, g, b);
+        led_matrix_set_pixel(x + 4, y + 2, r, g, b);
+        led_matrix_set_pixel(x + 5, y, r, g, b);
+        led_matrix_set_pixel(x + 6, y + 3, r, g, b);
+        led_matrix_set_pixel(x + 7, y + 1, r, g, b);
+        led_matrix_set_pixel(x + 8, y + 4, r, g, b);
+        break;
     }
 }
 
@@ -189,7 +192,7 @@ static void process_button(int b) {
 // Redraw a single beat cell
 static void redraw_beat_cell(int track, int beat) {
     int grid_x = 14;
-    int grid_y = 20;
+    int grid_y = 20 + UI_Y_OFFSET;
     int cell_w = 4;
     int cell_h = 4;
     int spacing = 2;
@@ -221,7 +224,7 @@ static void redraw_beat_cell(int track, int beat) {
 // Redraw track label
 static void redraw_track_label(int track) {
     int box_x = 5;
-    int box_y_start = 19;
+    int box_y_start = 19 + UI_Y_OFFSET;
     int box_w = 7;
     int box_h = 7;
     int spacing = 2;
@@ -268,7 +271,7 @@ static void draw_bpm_number(int x, int y, int bpm, uint8_t r, uint8_t g, uint8_t
 // Redraw BPM box cursor
 static void redraw_bpm_cursor() {
     int bpm_x = 4;
-    int bpm_y = 9;
+    int bpm_y = 9 + UI_Y_OFFSET;
     int bpm_w = 13;
     int bpm_h = 7;
 
@@ -293,7 +296,7 @@ static void redraw_bpm_cursor() {
 // Redraw PLAY/STOP box cursor
 static void redraw_play_cursor() {
     int play_x = 41;
-    int play_y = 9;
+    int play_y = 9 + UI_Y_OFFSET;
     int play_w = 17;
     int play_h = 7;
 
@@ -313,7 +316,7 @@ static void redraw_play_cursor() {
 
 // Draw or clear presets area
 static void draw_presets_area() {
-    int preset_y = 56;
+    int preset_y = 56 + UI_Y_OFFSET;
     int preset_x_start = 4;
     int preset_spacing = 14;
 
@@ -335,12 +338,12 @@ static void draw_presets_area() {
     }
 }
 
-// draw grid for tracks (now 9 beats)
+// draw grid for tracks
 static void draw_grid(int num_tracks) {
-    int grid_x = 14; // left side of grid
-    int grid_y = 20; // below title
-    int cell_w = 4;  // square size
-    int cell_h = 4;  // square size
+    int grid_x = 14;               // left side of grid
+    int grid_y = 20 + UI_Y_OFFSET; // below title
+    int cell_w = 4;                // square size
+    int cell_h = 4;                // square size
     int spacing = 2;
     int row_spacing = 5; // vertical spacing between rows
 
@@ -351,21 +354,16 @@ static void draw_grid(int num_tracks) {
             int x = grid_x + col * (cell_w + spacing);
             int y = grid_y + row * (cell_h + row_spacing);
 
-            // Check if this is the cursor position
             bool is_cursor =
                 (cursor_mode == CURSOR_BEAT && cursor_track == row && cursor_beat == col);
-
-            // Check if this beat is filled
             bool is_filled = beat_state[row][col];
 
-            // Blue cursor outline or white outline
             if (is_cursor) {
                 led_matrix_draw_rect(x, y, cell_w, cell_h, 0, 0, 255);
             } else {
                 led_matrix_draw_rect(x, y, cell_w, cell_h, 200, 200, 200);
             }
 
-            // Fill: yellow if filled, black if empty
             if (is_filled) {
                 led_matrix_fill_rect(x + 1, y + 1, cell_w - 2, cell_h - 2, 255, 255, 0);
             } else {
@@ -386,11 +384,11 @@ static void draw_menu() {
     int title_px = title_len * char_w;
     int title_x = (64 - title_px) / 2;
 
-    led_matrix_draw_text(title_x, 2, title, 255, 255, 0);
+    led_matrix_draw_text(title_x, 2 + UI_Y_OFFSET, title, 255, 255, 0);
 
     // BPM box (left side)
     int bpm_x = 4;
-    int bpm_y = 9;
+    int bpm_y = 9 + UI_Y_OFFSET;
     int bpm_w = 13;
     int bpm_h = 7;
 
@@ -402,7 +400,7 @@ static void draw_menu() {
 
     // PLAY/STOP box (right side)
     int play_x = 41;
-    int play_y = 9;
+    int play_y = 9 + UI_Y_OFFSET;
     int play_w = 17;
     int play_h = 7;
 
@@ -419,7 +417,7 @@ static void draw_menu() {
 
     // track numbers
     int box_x = 5;
-    int box_y_start = 19;
+    int box_y_start = 19 + UI_Y_OFFSET;
     int box_w = 7;
     int box_h = 7;
     int spacing = 2;
@@ -429,30 +427,21 @@ static void draw_menu() {
     for (int i = 0; i < num_tracks; i++) {
         int y = box_y_start + i * (box_h + spacing);
 
-        // Check if cursor is on this track label
         bool is_cursor = (cursor_mode == CURSOR_TRACK_LABEL && cursor_track == i);
-
-        // Check if this is the active track (show red fill)
         bool is_active = (i == active_track);
-
-        // Check if track has a preset assigned
         bool has_preset = (track_preset[i] != -1);
 
         if (is_cursor) {
             led_matrix_draw_rect(box_x - 1, y - 1, box_w + 2, box_h + 2, 0, 0, 255);
         }
 
-        // Color based on state
         if (is_active && has_preset) {
-            // Active track with preset: red background, white text
             led_matrix_fill_rect(box_x, y, box_w, box_h, 255, 0, 0);
             led_matrix_draw_text(box_x + 2, y + 1, labels[i], 255, 255, 255);
         } else if (has_preset) {
-            // Has preset but not active: white background, black text
             led_matrix_fill_rect(box_x, y, box_w, box_h, 255, 255, 255);
             led_matrix_draw_text(box_x + 2, y + 1, labels[i], 0, 0, 0);
         } else {
-            // No preset: black background, white text
             led_matrix_fill_rect(box_x, y, box_w, box_h, 0, 0, 0);
             led_matrix_draw_text(box_x + 2, y + 1, labels[i], 255, 255, 255);
         }
@@ -462,7 +451,7 @@ static void draw_menu() {
 
     // Draw presets at bottom ONLY if in preset selection mode
     if (preset_selection_mode) {
-        int preset_y = 56;
+        int preset_y = 56 + UI_Y_OFFSET;
         int preset_x_start = 4;
         int preset_spacing = 14;
 
@@ -515,14 +504,12 @@ void ui_update(void) {
             } else {
                 // At top track, move to BPM or PLAY
                 if (cursor_mode == CURSOR_BEAT) {
-                    // If on right half, go to PLAY
                     if (cursor_beat >= NUM_BEATS / 2) {
                         cursor_mode = CURSOR_PLAY;
                     } else {
                         cursor_mode = CURSOR_BPM;
                     }
                 } else {
-                    // From track label, go to BPM
                     cursor_mode = CURSOR_BPM;
                 }
             }
@@ -536,11 +523,9 @@ void ui_update(void) {
         if (preset_selection_mode) {
             // In preset selection mode, do nothing
         } else if (cursor_mode == CURSOR_BPM || cursor_mode == CURSOR_PLAY) {
-            // From PLAY, go to track 0
             cursor_mode = CURSOR_TRACK_LABEL;
             cursor_track = 0;
         } else if (cursor_mode == CURSOR_BEAT || cursor_mode == CURSOR_TRACK_LABEL) {
-            // Move down in tracks
             if (cursor_track < num_tracks - 1) {
                 cursor_track++;
             }
@@ -552,22 +537,19 @@ void ui_update(void) {
         button_short_press[BUTTON_LEFT] = false;
 
         if (preset_selection_mode) {
-            // Navigate presets left
             if (preset_cursor > 0) {
                 preset_cursor--;
             }
         } else if (cursor_mode == CURSOR_PLAY) {
             cursor_mode = CURSOR_BPM;
         } else if (cursor_mode == CURSOR_BEAT) {
-            // Move left in beats
             if (cursor_beat > 0) {
                 cursor_beat--;
             } else {
-                // At leftmost beat, go to track label
                 cursor_mode = CURSOR_TRACK_LABEL;
             }
         } else if (cursor_mode == CURSOR_TRACK_LABEL) {
-            // Already at leftmost, do nothing or wrap
+            // no-op or wrap
         }
     }
 
@@ -576,64 +558,52 @@ void ui_update(void) {
         button_short_press[BUTTON_RIGHT] = false;
 
         if (preset_selection_mode) {
-            // Navigate presets right
             if (preset_cursor < NUM_PRESETS - 1) {
                 preset_cursor++;
             }
         } else if (cursor_mode == CURSOR_BPM) {
             cursor_mode = CURSOR_PLAY;
         } else if (cursor_mode == CURSOR_TRACK_LABEL) {
-            // Can always enter beat grid
             cursor_mode = CURSOR_BEAT;
             cursor_beat = 0;
         } else if (cursor_mode == CURSOR_BEAT) {
-            // Move right in beats
             if (cursor_beat < NUM_BEATS - 1) {
                 cursor_beat++;
             }
         }
     }
 
-    // ----- SELECT BUTTON SHORT PRESS - Open preset menu OR toggle beat OR confirm preset OR tap
-    // tempo -----
+    // ----- SELECT BUTTON SHORT PRESS -----
     if (button_short_press[BUTTON_SELECT]) {
         button_short_press[BUTTON_SELECT] = false;
 
         if (preset_selection_mode) {
-            // Short press in preset mode confirms and exits
+            // Confirm preset and exit preset mode
             track_preset[preset_selection_track] = preset_cursor;
             preset_selection_mode = false;
 
-            // If no active track exists, set this as active
             int old_active = active_track;
             if (track_preset[active_track] == -1) {
                 active_track = preset_selection_track;
             }
 
-            // Redraw the track label to show preset/active status change
             redraw_track_label(preset_selection_track);
-            // If active track changed, redraw the old active track too
             if (old_active != active_track) {
                 redraw_track_label(old_active);
             }
         } else if (cursor_mode == CURSOR_BPM) {
-            // Tap tempo
             bpm_tap();
         } else if (cursor_mode == CURSOR_PLAY) {
-            // Toggle play/stop
             is_playing = !is_playing;
             if (is_playing) {
-                // Starting playback - reset to beat 0
                 current_beat = 0;
                 last_beat_time = time_us_64();
-                // Redraw all beat cells to show playback position
                 for (int t = 0; t < 4; t++) {
                     for (int b = 0; b < NUM_BEATS; b++) {
                         redraw_beat_cell(t, b);
                     }
                 }
             } else {
-                // Stopping playback - redraw all beat cells to remove yellow outline
                 for (int t = 0; t < 4; t++) {
                     for (int b = 0; b < NUM_BEATS; b++) {
                         redraw_beat_cell(t, b);
@@ -642,29 +612,22 @@ void ui_update(void) {
             }
             redraw_play_cursor();
         } else if (cursor_mode == CURSOR_TRACK_LABEL) {
-            // Short press on track label opens preset selection mode
             preset_selection_mode = true;
             preset_selection_track = cursor_track;
-            // Start with current preset, or first preset if none selected
             preset_cursor = (track_preset[cursor_track] != -1) ? track_preset[cursor_track] : 0;
         } else if (cursor_mode == CURSOR_BEAT) {
-            // Toggle beat - but only if track has a preset
             if (track_preset[cursor_track] != -1) {
                 beat_state[cursor_track][cursor_beat] = !beat_state[cursor_track][cursor_beat];
-                // Beat toggle will be redrawn by selective redraw
                 redraw_beat_cell(cursor_track, cursor_beat);
             }
         }
-        // PLAY short press disabled
     }
 
-    // ----- LONG PRESS ON TRACK - Set as active track -----
+    // ----- LONG PRESS ON ANY BUTTON WHILE ON TRACK AREA -> SET ACTIVE TRACK -----
     if (button_long_press[BUTTON_SELECT] || button_long_press[BUTTON_UP] ||
         button_long_press[BUTTON_DOWN] || button_long_press[BUTTON_LEFT] ||
         button_long_press[BUTTON_RIGHT]) {
 
-        // Long press on any track element (label or beat) sets active track
-        // Only allow if track has a preset assigned
         if (!preset_selection_mode &&
             (cursor_mode == CURSOR_TRACK_LABEL || cursor_mode == CURSOR_BEAT)) {
             if (track_preset[cursor_track] != -1) {
@@ -672,7 +635,6 @@ void ui_update(void) {
             }
         }
 
-        // Clear all long press flags
         button_long_press[BUTTON_SELECT] = false;
         button_long_press[BUTTON_UP] = false;
         button_long_press[BUTTON_DOWN] = false;
@@ -682,21 +644,18 @@ void ui_update(void) {
 
     // Selective redraw - only update what changed
 
-    // Check preset mode changes (show/hide presets area)
+    // Preset mode changes
     if (preset_selection_mode != prev_preset_selection_mode) {
         draw_presets_area();
         prev_preset_selection_mode = preset_selection_mode;
         prev_preset_cursor = preset_cursor;
-    }
-    // Check preset cursor changes (only if in preset mode)
-    else if (preset_selection_mode && preset_cursor != prev_preset_cursor) {
+    } else if (preset_selection_mode && preset_cursor != prev_preset_cursor) {
         draw_presets_area();
         prev_preset_cursor = preset_cursor;
     }
 
-    // Check cursor mode changes
+    // Cursor mode changes
     if (cursor_mode != prev_cursor_mode) {
-        // Clear old cursor
         if (prev_cursor_mode == CURSOR_BPM)
             redraw_bpm_cursor();
         else if (prev_cursor_mode == CURSOR_PLAY)
@@ -706,7 +665,6 @@ void ui_update(void) {
         else if (prev_cursor_mode == CURSOR_BEAT)
             redraw_beat_cell(prev_cursor_track, prev_cursor_beat);
 
-        // Draw new cursor
         if (cursor_mode == CURSOR_BPM)
             redraw_bpm_cursor();
         else if (cursor_mode == CURSOR_PLAY)
@@ -720,7 +678,7 @@ void ui_update(void) {
         prev_cursor_track = cursor_track;
         prev_cursor_beat = cursor_beat;
     }
-    // Check cursor position changes within same mode
+    // Cursor position changes within same mode
     else if (cursor_mode == CURSOR_TRACK_LABEL && cursor_track != prev_cursor_track) {
         redraw_track_label(prev_cursor_track);
         redraw_track_label(cursor_track);
@@ -734,25 +692,25 @@ void ui_update(void) {
         }
     }
 
-    // Check active track changes
+    // Active track changes
     if (active_track != prev_active_track) {
         redraw_track_label(prev_active_track);
         redraw_track_label(active_track);
         prev_active_track = active_track;
     }
 
-    // Check BPM changes
+    // BPM changes
     int current_bpm = bpm_get();
     if (current_bpm != prev_bpm) {
         redraw_bpm_cursor();
         prev_bpm = current_bpm;
     }
 
-    // Update BPM flash effect
+    // BPM flash effect
     static bool was_flashing = false;
     bool is_flashing = bpm_is_flashing();
     if (was_flashing && !is_flashing) {
-        redraw_bpm_cursor(); // Redraw when flash ends
+        redraw_bpm_cursor();
     }
     was_flashing = is_flashing;
     bpm_update_flash();
@@ -760,22 +718,18 @@ void ui_update(void) {
     // Update playback position if playing
     if (is_playing) {
         uint64_t now = time_us_64();
-        // Calculate time per beat: 60 seconds per minute / BPM = seconds per beat
-        // Convert to microseconds: (60 * 1000000) / BPM
         uint64_t beat_interval_us = 60000000 / bpm_get();
 
         if ((now - last_beat_time) >= beat_interval_us) {
             int prev_beat = current_beat;
 
-            // Advance to next beat
             current_beat++;
             if (current_beat >= NUM_BEATS) {
-                current_beat = 0; // Loop back to start
+                current_beat = 0;
             }
 
             last_beat_time = now;
 
-            // Redraw the previous and current beat cells for all tracks
             for (int t = 0; t < 4; t++) {
                 redraw_beat_cell(t, prev_beat);
                 redraw_beat_cell(t, current_beat);
@@ -795,7 +749,8 @@ int ui_get_active_track(void) {
 
 // Get preset for a specific track (-1 if none)
 int ui_get_track_preset(int track) {
-    if (track < 0 || track >= 4) return -1;
+    if (track < 0 || track >= 4)
+        return -1;
     return track_preset[track];
 }
 
@@ -811,6 +766,7 @@ int ui_get_current_beat(void) {
 
 // Check if a specific beat is active for a track
 bool ui_get_beat_state(int track, int beat) {
-    if (track < 0 || track >= 4 || beat < 0 || beat >= NUM_BEATS) return false;
+    if (track < 0 || track >= 4 || beat < 0 || beat >= NUM_BEATS)
+        return false;
     return beat_state[track][beat];
 }

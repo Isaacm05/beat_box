@@ -1,15 +1,3 @@
-#include "hardware/irq.h"
-#include "hardware/pwm.h"
-#include "lcd/lcd.h"
-#include "lcd/lcd_setup.h"
-#include "pico/stdlib.h"
-#include "potentiometers/adc_potentiometer.h"
-#include "wavegen/presets.h"
-#include "wavegen/pwm_audio.h"
-#include "wavegen/waveform_gen.h"
-#include <math.h>
-#include <stdio.h>
-
 WaveParams adc_buffer;
 
 // Timing configuration for live editing
@@ -20,7 +8,8 @@ bool params_changed = false;
 extern uint16_t pwm_buf[MAX_SAMPLES];
 static float lcd_buf[MAX_SAMPLES]; // Float buffer for LCD display
 
-int main() {
+// int main() {
+int vibe_main(void) {
     stdio_init_all();
     printf("=== Live Waveform Editor ===\n");
 
