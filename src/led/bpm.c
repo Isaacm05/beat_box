@@ -28,7 +28,6 @@ void bpm_init(void) {
     }
 }
 
-
 int bpm_get(void) {
     return current_bpm;
 }
@@ -55,7 +54,7 @@ bool bpm_tap(void) {
         tap_count = 0;
     }
 
-    // add current tap 
+    // add current tap
     if (tap_count < MAX_TAPS) {
         tap_times[tap_count] = now;
         tap_count++;
