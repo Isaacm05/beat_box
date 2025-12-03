@@ -92,7 +92,7 @@ int main() {
     pwm_audio_init();
     setup_lcd();
 
-    adc_buffer = drum_presets[0];
+    adc_buffer = drum_presets[2];
 
     // Set the global pointer to our params (this is for later when we have 8 params)
     set_current_params(&adc_buffer);

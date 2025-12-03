@@ -8,6 +8,7 @@
         "irq.h": "c",
         "adc_potentiometer.h": "c",
         "lcd.h": "c",
-        "presets.h": "c"
+        "presets.h": "c",
+        "adc.h": "c"
     }
 }
