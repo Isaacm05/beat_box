@@ -788,3 +788,29 @@ void ui_update(void) {
 int ui_get_bpm(void) {
     return bpm_get();
 }
+
+int ui_get_active_track(void) {
+    return active_track;
+}
+
+// Get preset for a specific track (-1 if none)
+int ui_get_track_preset(int track) {
+    if (track < 0 || track >= 4) return -1;
+    return track_preset[track];
+}
+
+// Check if playing
+bool ui_is_playing(void) {
+    return is_playing;
+}
+
+// Get current beat position (0-7)
+int ui_get_current_beat(void) {
+    return current_beat;
+}
+
+// Check if a specific beat is active for a track
+bool ui_get_beat_state(int track, int beat) {
+    if (track < 0 || track >= 4 || beat < 0 || beat >= NUM_BEATS) return false;
+    return beat_state[track][beat];
+}

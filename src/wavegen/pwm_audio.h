@@ -13,6 +13,7 @@
 
 void pwm_audio_init(void);
 void pwm_play_pwm_nonblocking(const uint16_t* pwm_buffer, int len); // Direct PWM playback
+void pwm_stop_audio(void);
 bool pwm_is_playing(void);
 
 extern uint16_t pwm_buf[MAX_SAMPLES];

@@ -75,6 +75,20 @@ void pwm_play_pwm_nonblocking(const uint16_t* pwm_buffer, int len) {
     dma_channel_start(dma_chan);
 }
 
+void pwm_stop_audio(void) {
+    if (!is_playing) {
+        return;
+    }
+
+    // Abort
+    dma_channel_abort(dma_chan);
+
+    // 128 is silent
+    pwm_set_chan_level(pwm_slice, pwm_channel, 128);
+
+    is_playing = false;
+}
+
 // Check if audio is currently playing
 bool pwm_is_playing(void) {
     return is_playing;
