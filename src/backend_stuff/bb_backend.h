@@ -12,7 +12,7 @@ Config, note that stuff here may be adjusted later, especially since its based
 off the visual aid we made before
 */ 
 #define BB_MAX_TRACKS 4
-#define BB_NUM_STEPS  16
+#define BB_NUM_STEPS  8
 #define BB_NUM_PARAMS 8
 
 //Types
