@@ -1,6 +1,15 @@
-#include "led_matrix.h"
+#include "hardware/irq.h"
+#include "hardware/pwm.h"
+#include "lcd/lcd.h"
+#include "lcd/lcd_setup.h"
+#include "led/led_matrix.h"
+#include "led/ui.h"
 #include "pico/stdlib.h"
-#include "ui.h"
+#include "potentiometers/adc_potentiometer.h"
+#include "wavegen/presets.h"
+#include "wavegen/pwm_audio.h"
+#include "wavegen/waveform_gen.h"
+#include <math.h>
 #include <stdio.h>
 
 WaveParams adc_buffer;
