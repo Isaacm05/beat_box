@@ -24,7 +24,7 @@ static const uint8_t colors[][3] = {
 static const int num_colors = 8;
 
 // button control vars
-#define PIN_SELECT 21
+#define PIN_SELECT 31
 
 static const uint BUTTON_PINS[5] = {PIN_LEFT, PIN_RIGHT, PIN_UP, PIN_DOWN, PIN_SELECT};
 
@@ -624,8 +624,7 @@ void ui_update(void) {
                 // Beat toggle will be redrawn by selective redraw
                 redraw_beat_cell(cursor_track, cursor_beat);
             } else {
-                printf("Cannot toggle beat - no preset selected for track %d\n",
-                       cursor_track + 1);
+                printf("Cannot toggle beat - no preset selected for track %d\n", cursor_track + 1);
             }
         }
         // BPM and PLAY short press disabled
@@ -643,8 +642,8 @@ void ui_update(void) {
             // Long press in preset mode confirms and exits
             track_preset[preset_selection_track] = preset_cursor;
             preset_selection_mode = false;
-            printf("Track %d preset set to %d, exiting preset mode\n",
-                   preset_selection_track + 1, preset_cursor);
+            printf("Track %d preset set to %d, exiting preset mode\n", preset_selection_track + 1,
+                   preset_cursor);
         } else if (cursor_mode == CURSOR_TRACK_LABEL || cursor_mode == CURSOR_BEAT) {
             // Long press on track row sets active track (don't enter preset mode)
             active_track = cursor_track;
@@ -676,16 +675,24 @@ void ui_update(void) {
     // Check cursor mode changes
     if (cursor_mode != prev_cursor_mode) {
         // Clear old cursor
-        if (prev_cursor_mode == CURSOR_BPM) redraw_bpm_cursor();
-        else if (prev_cursor_mode == CURSOR_PLAY) redraw_play_cursor();
-        else if (prev_cursor_mode == CURSOR_TRACK_LABEL) redraw_track_label(prev_cursor_track);
-        else if (prev_cursor_mode == CURSOR_BEAT) redraw_beat_cell(prev_cursor_track, prev_cursor_beat);
+        if (prev_cursor_mode == CURSOR_BPM)
+            redraw_bpm_cursor();
+        else if (prev_cursor_mode == CURSOR_PLAY)
+            redraw_play_cursor();
+        else if (prev_cursor_mode == CURSOR_TRACK_LABEL)
+            redraw_track_label(prev_cursor_track);
+        else if (prev_cursor_mode == CURSOR_BEAT)
+            redraw_beat_cell(prev_cursor_track, prev_cursor_beat);
 
         // Draw new cursor
-        if (cursor_mode == CURSOR_BPM) redraw_bpm_cursor();
-        else if (cursor_mode == CURSOR_PLAY) redraw_play_cursor();
-        else if (cursor_mode == CURSOR_TRACK_LABEL) redraw_track_label(cursor_track);
-        else if (cursor_mode == CURSOR_BEAT) redraw_beat_cell(cursor_track, cursor_beat);
+        if (cursor_mode == CURSOR_BPM)
+            redraw_bpm_cursor();
+        else if (cursor_mode == CURSOR_PLAY)
+            redraw_play_cursor();
+        else if (cursor_mode == CURSOR_TRACK_LABEL)
+            redraw_track_label(cursor_track);
+        else if (cursor_mode == CURSOR_BEAT)
+            redraw_beat_cell(cursor_track, cursor_beat);
 
         prev_cursor_mode = cursor_mode;
         prev_cursor_track = cursor_track;
@@ -696,8 +703,7 @@ void ui_update(void) {
         redraw_track_label(prev_cursor_track);
         redraw_track_label(cursor_track);
         prev_cursor_track = cursor_track;
-    }
-    else if (cursor_mode == CURSOR_BEAT) {
+    } else if (cursor_mode == CURSOR_BEAT) {
         if (cursor_track != prev_cursor_track || cursor_beat != prev_cursor_beat) {
             redraw_beat_cell(prev_cursor_track, prev_cursor_beat);
             redraw_beat_cell(cursor_track, cursor_beat);
