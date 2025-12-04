@@ -6,6 +6,7 @@
 #include "led/ui.h"
 #include "pico/stdlib.h"
 #include "potentiometers/adc_potentiometer.h"
+#include "wavegen/mixer.h"
 #include "wavegen/presets.h"
 #include "wavegen/pwm_audio.h"
 #include "wavegen/waveform_gen.h"
@@ -30,6 +31,9 @@ static bool track_has_preset[NUM_TRACKS] = {false, false, false, false};
 // Track the previously active track to detect changes
 static int prev_active_track = -1;
 static bool ignore_pot_updates = false; // Flag to prevent pot overwrite on track switch
+
+static uint16_t track_buffers[4][MAX_SAMPLES];
+static int prev_beat_for_playback = -1;
 
 // Callback function when a preset is selected on the LED UI
 void on_preset_selected(int track, int preset) {
@@ -188,13 +192,47 @@ int main() {
 
         // MIXER
         if (ui_is_playing()) {
-            mixer_init();
-            for (int i = 0; i < NUM_TRACKS; i++) {
-                if (track_has_preset[i]) {
-                    waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &track_params[i]);
-                    mixer_add_track(i, pwm_buf, MAX_SAMPLES);
+            int current_beat = ui_get_current_beat();
+
+            // Only trigger on beat changes to avoid retriggering
+            if (current_beat != prev_beat_for_playback) {
+                prev_beat_for_playback = current_beat;
+
+                // Clear mixer for new beat
+                mixer_clear();
+
+                // Check all tracks for active beats at current position
+                for (int track = 0; track < 4; track++) {
+                    if (ui_get_beat_state(track, current_beat)) {
+                        int preset_id = ui_get_track_preset(track);
+                        if (preset_id >= 0 && preset_id < num_presets) {
+                            // Generate waveform for this track
+                            waveform_generate(track_buffers[track], MAX_SAMPLES,
+                                              &track_params[preset_id]);
+
+                            // Add track to mixer
+                            mixer_add_track(track, track_buffers[track], MAX_SAMPLES);
+                            printf("Added track %d to mix at beat %d\n", track, current_beat);
+                        }
+                    }
+                }
+
+                // If any tracks were added, play the mixed output
+                if (mixer_has_active_tracks()) {
+                    int mix_len;
+                    const uint16_t* mixed_output = mixer_get_output(&mix_len);
+                    if (mixed_output) {
+                        pwm_play_pwm_nonblocking(mixed_output, mix_len);
+                        printf("Playing mixed output (%d samples)\n", mix_len);
+                    }
                 }
             }
+        } else {
+            if (prev_beat_for_playback != -1) {
+                pwm_stop_audio();
+                printf("Playback stopped\n");
+            }
+            prev_beat_for_playback = -1;
         }
     }
 }
