@@ -25,9 +25,41 @@ static float lcd_buf[MAX_SAMPLES]; // Float buffer for LCD display
 // Store WaveParams for each of the 4 tracks
 #define NUM_TRACKS 4
 static WaveParams track_params[NUM_TRACKS];
+static bool track_has_preset[NUM_TRACKS] = {false, false, false, false};
 
 // Track the previously active track to detect changes
 static int prev_active_track = -1;
+static bool ignore_pot_updates = false; // Flag to prevent pot overwrite on track switch
+
+// Callback function when a preset is selected on the LED UI
+void on_preset_selected(int track, int preset) {
+    // Preset index now maps directly to drum_presets array (0-9)
+    int preset_index = preset;
+
+    // Store the preset into this track's params (overwrites previous)
+    track_params[track] = drum_presets[preset_index];
+    track_has_preset[track] = true;
+
+    // If this is the active track, update adc_buffer and LCD immediately
+    int active_track = ui_get_active_track();
+    if (track == active_track) {
+        adc_buffer = track_params[track];
+
+        // Regenerate waveforms
+        waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
+        waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer);
+
+        // Update LCD display
+        LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
+        LCD_PrintWaveMenu(adc_buffer.waveform_id, (int) adc_buffer.frequency,
+                          (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
+                          (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
+                          (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
+                          (int) (adc_buffer.comp_amount * 100), idx);
+    }
+
+    printf("Loaded preset %d into track %d\n", preset_index, track);
+}
 
 int main() {
     stdio_init_all();
@@ -40,16 +72,13 @@ int main() {
     led_matrix_init();
     ui_init();
 
-    led_matrix_init();
-    ui_init();
+    // Register preset callback
+    ui_set_preset_callback(on_preset_selected);
+
     pwm_audio_init();
     setup_lcd();
 
-    // Initialize all tracks with preset 0 (Pure Sine - index 6)
-    for (int i = 0; i < NUM_TRACKS; i++) {
-        track_params[i] = drum_presets[6];
-    }
-
+    // Don't initialize tracks - they start empty until a preset is selected
     adc_buffer = drum_presets[0];
 
     // Set the global pointer to our params (this is for later when we have 8 params)
@@ -73,18 +102,18 @@ int main() {
 
         uint32_t current_time = to_ms_since_boot(get_absolute_time());
 
-        // Get current active track and its preset
+        // Get current active track
         int active_track = ui_get_active_track();
-        int current_preset = ui_get_track_preset(active_track);
 
-        // When active track changes, load that track's params into adc_buffer
+        // When active track changes, load that track's params into adc_buffer (if it has a preset)
         if (active_track != prev_active_track) {
-            if (current_preset != -1) {
+
+            if (track_has_preset[active_track]) {
                 // Load this track's stored params
                 adc_buffer = track_params[active_track];
-
+                printf("New track params: freq=%.2f, amp=%.2f, decay=%.2f\n", adc_buffer.frequency,
+                       adc_buffer.amplitude, adc_buffer.decay);
                 // Regenerate waveforms
-                waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
                 waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer);
 
                 // Update LCD display
@@ -97,39 +126,25 @@ int main() {
                     (int) (adc_buffer.comp_amount * 100), idx);
 
                 printf("Switched to track %d\n", active_track);
+            } else {
+                // Track has no preset - clear the LCD display
+                LCD_Clear(BLACK);
+                printf("Switched to track %d (no preset)\n", active_track);
             }
             prev_active_track = active_track;
-        }
-
-        // When a preset is selected, load it into the track's params and adc_buffer
-        if (current_preset != -1) {
-            // Map LED UI preset index (0-3) to drum_presets array (6-9 for basic shapes)
-            int preset_index = current_preset + 6;
-
-            // Store the preset into this track's params (overwrites previous)
-            track_params[active_track] = drum_presets[preset_index];
-
-            // Also load into adc_buffer for immediate use
-            adc_buffer = track_params[active_track];
-
-            // Regenerate waveforms
-            waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
-            waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer);
-
-            // Update LCD display
-            LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
-            LCD_PrintWaveMenu(
-                adc_buffer.waveform_id, (int) adc_buffer.frequency,
-                (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
-                (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
-                (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
-                (int) (adc_buffer.comp_amount * 100), idx);
-
-            printf("Loaded preset %d into track %d\n", preset_index, active_track);
+            ignore_pot_updates = true; // Set flag to skip next pot update
         }
 
         // Update potentiometer values - returns true if params changed
-        bool params_updated = update_pots(&adc_buffer);
+        // Skip this update if we just switched tracks to avoid overwriting loaded params
+        bool params_updated = false;
+        if (!ignore_pot_updates) {
+            params_updated = update_pots(&adc_buffer);
+            track_params[active_track] = adc_buffer;
+
+        } else {
+            ignore_pot_updates = false; // Clear the flag after skipping one update
+        }
 
         if (update_lcd_params) {
             update_lcd_params = false;
@@ -143,12 +158,7 @@ int main() {
         }
         if (params_updated || menu_updated) {
             // Regenerate waveform with new parameters
-            waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
             waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer); // Generate float version for
-
-            // Redraw LCD display
-
-            // LCD_DrawFillRectangle(11, 60, 319, 239, BLACK);
 
             LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
             LCD_PrintWaveMenu(
@@ -165,7 +175,7 @@ int main() {
 
         if (params_changed && (current_time - last_edit_time) >= EDIT_TIMEOUT_MS) {
             printf("Playing waveform...\n");
-
+            waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
             pwm_play_pwm_nonblocking(pwm_buf, MAX_SAMPLES);
 
             params_changed = false; // Reset change flag
@@ -175,5 +185,16 @@ int main() {
         // if (!params_updated) {
         //     sleep_ms(10); // 20 hz
         // }
+
+        // MIXER
+        if (ui_is_playing()) {
+            mixer_init();
+            for (int i = 0; i < NUM_TRACKS; i++) {
+                if (track_has_preset[i]) {
+                    waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &track_params[i]);
+                    mixer_add_track(i, pwm_buf, MAX_SAMPLES);
+                }
+            }
+        }
     }
 }

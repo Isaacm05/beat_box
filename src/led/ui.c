@@ -56,8 +56,11 @@ static int prev_active_track = 0;
 static int prev_preset_cursor = 0;
 
 #define NUM_BEATS 8
-#define NUM_PRESETS 4
-static const char* preset_names[NUM_PRESETS] = {"SIN", "TRI", "SQR", "NOI"};
+#define NUM_PRESETS 10
+static const char* preset_names[NUM_PRESETS] = {
+    "KICK", "SNARE", "HIHAT", "BASS", "TONE", "OHAT",  // Drum presets 0-5
+    "SIN", "TRI", "SQR", "NOI"                          // Basic shapes 6-9
+};
 
 // Track presets
 static int track_preset[4] = {-1, -1, -1, -1};
@@ -67,6 +70,10 @@ static bool preset_selection_mode = false;
 static bool prev_preset_selection_mode = false;
 static int preset_selection_track = 0;
 static int preset_cursor = 0;
+static int preset_scroll_offset = 0; // Scroll offset for preset display
+
+// Callback for preset loading
+static void (*preset_callback)(int track, int preset) = NULL;
 
 // Beat state for each track (true = filled/active)
 static bool beat_state[4][NUM_BEATS] = {0};
@@ -79,52 +86,84 @@ static bool is_playing = false;
 static int current_beat = 0;
 static uint64_t last_beat_time = 0;
 
-// Draw waveform preset icons
-static void draw_waveform(int x, int y, int preset_type, uint8_t r, uint8_t g, uint8_t b) {
+// Draw preset icons (5x5 pixels each)
+static void draw_preset_icon(int x, int y, int preset_type, uint8_t r, uint8_t g, uint8_t b) {
     switch (preset_type) {
-    case 0: // Sine wave
+    case 0: // KICK - Letter K
+        // K shape
+        led_matrix_fill_rect(x, y, 1, 5, r, g, b); // Vertical line
+        led_matrix_set_pixel(x + 2, y, r, g, b);
+        led_matrix_set_pixel(x + 1, y + 1, r, g, b);
+        led_matrix_set_pixel(x + 1, y + 2, r, g, b);
+        led_matrix_set_pixel(x + 2, y + 2, r, g, b);
+        led_matrix_set_pixel(x + 1, y + 3, r, g, b);
+        led_matrix_set_pixel(x + 2, y + 4, r, g, b);
+        break;
+    case 1: // SNARE - Drumstick
+        // Drumstick shape
+        led_matrix_fill_rect(x, y, 2, 2, r, g, b); // Stick head
+        led_matrix_set_pixel(x + 1, y + 2, r, g, b); // Stick handle
+        led_matrix_set_pixel(x + 2, y + 3, r, g, b);
+        led_matrix_set_pixel(x + 2, y + 4, r, g, b);
+        break;
+    case 2: // HIHAT - Letter H
+        // H shape
+        led_matrix_fill_rect(x, y, 1, 5, r, g, b);
+        led_matrix_fill_rect(x + 2, y, 1, 5, r, g, b);
+        led_matrix_set_pixel(x + 1, y + 2, r, g, b);
+        break;
+    case 3: // BASS - Letter B
+        // B shape
+        led_matrix_fill_rect(x, y, 1, 5, r, g, b);
+        led_matrix_fill_rect(x + 1, y, 2, 1, r, g, b);
+        led_matrix_fill_rect(x + 1, y + 2, 2, 1, r, g, b);
+        led_matrix_fill_rect(x + 1, y + 4, 2, 1, r, g, b);
+        led_matrix_set_pixel(x + 2, y + 1, r, g, b);
+        led_matrix_set_pixel(x + 2, y + 3, r, g, b);
+        break;
+    case 4: // TONE - Musical note
+        // Note shape
+        led_matrix_fill_rect(x + 2, y, 1, 4, r, g, b); // Stem
+        led_matrix_fill_rect(x, y + 3, 2, 2, r, g, b); // Note head
+        break;
+    case 5: // OHAT - Letter O
+        // O shape
+        led_matrix_draw_rect(x, y, 3, 5, r, g, b);
+        break;
+    case 6: // SIN - Sine wave symbol
         led_matrix_set_pixel(x, y + 2, r, g, b);
         led_matrix_set_pixel(x + 1, y + 1, r, g, b);
-        led_matrix_set_pixel(x + 2, y, r, g, b);
-        led_matrix_set_pixel(x + 3, y + 1, r, g, b);
-        led_matrix_set_pixel(x + 4, y + 2, r, g, b);
-        led_matrix_set_pixel(x + 5, y + 3, r, g, b);
-        led_matrix_set_pixel(x + 6, y + 4, r, g, b);
-        led_matrix_set_pixel(x + 7, y + 3, r, g, b);
-        led_matrix_set_pixel(x + 8, y + 2, r, g, b);
-        break;
-    case 1: // Triangle wave
-        led_matrix_set_pixel(x, y + 4, r, g, b);
-        led_matrix_set_pixel(x + 1, y + 3, r, g, b);
         led_matrix_set_pixel(x + 2, y + 2, r, g, b);
-        led_matrix_set_pixel(x + 3, y + 1, r, g, b);
-        led_matrix_set_pixel(x + 4, y, r, g, b);
-        led_matrix_set_pixel(x + 5, y + 1, r, g, b);
-        led_matrix_set_pixel(x + 6, y + 2, r, g, b);
-        led_matrix_set_pixel(x + 7, y + 3, r, g, b);
-        led_matrix_set_pixel(x + 8, y + 4, r, g, b);
+        led_matrix_set_pixel(x + 3, y + 3, r, g, b);
+        led_matrix_set_pixel(x + 4, y + 2, r, g, b);
         break;
-    case 2: // Square wave
+    case 7: // TRI - Triangle symbol
+        led_matrix_set_pixel(x + 2, y, r, g, b);
+        led_matrix_set_pixel(x + 1, y + 1, r, g, b);
+        led_matrix_set_pixel(x + 3, y + 1, r, g, b);
+        led_matrix_set_pixel(x, y + 2, r, g, b);
+        led_matrix_set_pixel(x + 4, y + 2, r, g, b);
+        led_matrix_fill_rect(x, y + 3, 5, 1, r, g, b);
+        break;
+    case 8: // SQR - Square wave symbol
         led_matrix_set_pixel(x, y, r, g, b);
         led_matrix_set_pixel(x + 1, y, r, g, b);
-        led_matrix_set_pixel(x + 2, y, r, g, b);
+        led_matrix_set_pixel(x + 1, y + 1, r, g, b);
+        led_matrix_set_pixel(x + 1, y + 2, r, g, b);
+        led_matrix_set_pixel(x + 1, y + 3, r, g, b);
+        led_matrix_set_pixel(x + 2, y + 3, r, g, b);
+        led_matrix_set_pixel(x + 3, y + 3, r, g, b);
         led_matrix_set_pixel(x + 3, y, r, g, b);
-        led_matrix_set_pixel(x + 4, y + 4, r, g, b);
-        led_matrix_set_pixel(x + 5, y + 4, r, g, b);
-        led_matrix_set_pixel(x + 6, y + 4, r, g, b);
-        led_matrix_set_pixel(x + 7, y + 4, r, g, b);
-        led_matrix_set_pixel(x + 8, y, r, g, b);
+        led_matrix_set_pixel(x + 4, y, r, g, b);
         break;
-    case 3: // Noise
+    case 9: // NOI - Random dots (noise)
         led_matrix_set_pixel(x, y + 1, r, g, b);
         led_matrix_set_pixel(x + 1, y + 3, r, g, b);
         led_matrix_set_pixel(x + 2, y, r, g, b);
-        led_matrix_set_pixel(x + 3, y + 4, r, g, b);
-        led_matrix_set_pixel(x + 4, y + 2, r, g, b);
-        led_matrix_set_pixel(x + 5, y, r, g, b);
-        led_matrix_set_pixel(x + 6, y + 3, r, g, b);
-        led_matrix_set_pixel(x + 7, y + 1, r, g, b);
-        led_matrix_set_pixel(x + 8, y + 4, r, g, b);
+        led_matrix_set_pixel(x + 2, y + 4, r, g, b);
+        led_matrix_set_pixel(x + 3, y + 2, r, g, b);
+        led_matrix_set_pixel(x + 4, y + 1, r, g, b);
+        led_matrix_set_pixel(x + 4, y + 3, r, g, b);
         break;
     }
 }
@@ -314,27 +353,41 @@ static void redraw_play_cursor() {
     }
 }
 
-// Draw or clear presets area
+// Draw or clear presets area (scrollable window)
 static void draw_presets_area() {
     int preset_y = 56 + UI_Y_OFFSET;
     int preset_x_start = 4;
-    int preset_spacing = 14;
+    int preset_spacing = 8; // 5px icon + 3px gap
+    int max_visible = 7; // Show 7 presets at once
 
     if (!preset_selection_mode) {
         // Clear presets area
-        led_matrix_fill_rect(preset_x_start, preset_y, 60, 8, 0, 0, 0);
+        led_matrix_fill_rect(preset_x_start, preset_y, 64, 8, 0, 0, 0);
         return;
     }
 
-    for (int i = 0; i < NUM_PRESETS; i++) {
+    // Calculate scroll offset to keep cursor in view
+    if (preset_cursor < preset_scroll_offset) {
+        preset_scroll_offset = preset_cursor;
+    }
+    if (preset_cursor >= preset_scroll_offset + max_visible) {
+        preset_scroll_offset = preset_cursor - max_visible + 1;
+    }
+
+    // Clear area
+    led_matrix_fill_rect(preset_x_start, preset_y, 64, 8, 0, 0, 0);
+
+    // Draw visible presets
+    for (int i = 0; i < max_visible && (preset_scroll_offset + i) < NUM_PRESETS; i++) {
+        int preset_idx = preset_scroll_offset + i;
         int x = preset_x_start + i * preset_spacing;
-        bool is_preset_cursor = (i == preset_cursor);
+        bool is_preset_cursor = (preset_idx == preset_cursor);
 
-        uint8_t r = (is_preset_cursor) ? 0 : 80;
-        uint8_t g = (is_preset_cursor) ? 0 : 80;
-        uint8_t b = (is_preset_cursor) ? 255 : 80;
+        uint8_t r = (is_preset_cursor) ? 255 : 80;
+        uint8_t g = (is_preset_cursor) ? 255 : 80;
+        uint8_t b = (is_preset_cursor) ? 0 : 80;
 
-        draw_waveform(x, preset_y, i, r, g, b);
+        draw_preset_icon(x, preset_y, preset_idx, r, g, b);
     }
 }
 
@@ -449,23 +502,7 @@ static void draw_menu() {
 
     draw_grid(num_tracks);
 
-    // Draw presets at bottom ONLY if in preset selection mode
-    if (preset_selection_mode) {
-        int preset_y = 56 + UI_Y_OFFSET;
-        int preset_x_start = 4;
-        int preset_spacing = 14;
-
-        for (int i = 0; i < NUM_PRESETS; i++) {
-            int x = preset_x_start + i * preset_spacing;
-            bool is_preset_cursor = (i == preset_cursor);
-
-            uint8_t r = (is_preset_cursor) ? 0 : 80;
-            uint8_t g = (is_preset_cursor) ? 0 : 80;
-            uint8_t b = (is_preset_cursor) ? 255 : 80;
-
-            draw_waveform(x, preset_y, i, r, g, b);
-        }
-    }
+    // Presets drawn via draw_presets_area()
 }
 
 // UI initialization
@@ -581,6 +618,11 @@ void ui_update(void) {
             // Confirm preset and exit preset mode
             track_preset[preset_selection_track] = preset_cursor;
             preset_selection_mode = false;
+
+            // Call the preset callback if registered
+            if (preset_callback != NULL) {
+                preset_callback(preset_selection_track, preset_cursor);
+            }
 
             int old_active = active_track;
             if (track_preset[active_track] == -1) {
@@ -769,4 +811,9 @@ bool ui_get_beat_state(int track, int beat) {
     if (track < 0 || track >= 4 || beat < 0 || beat >= NUM_BEATS)
         return false;
     return beat_state[track][beat];
+}
+
+// Set callback for when a preset is loaded into a track
+void ui_set_preset_callback(void (*callback)(int track, int preset)) {
+    preset_callback = callback;
 }

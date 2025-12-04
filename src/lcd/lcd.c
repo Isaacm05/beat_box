@@ -1079,7 +1079,7 @@ void LCD_PlotWaveform(uint16_t* samples, int sample_count) {
 
     int width = WIDTH - 11;   // screen width
     int height = HEIGHT - 70; // screen height , leave room for text at top
-    int cut_len = /*800*/ 0;
+    int cut_len = 8000;
     int buffer_count = sample_count - cut_len;
 
     // Clear screen
