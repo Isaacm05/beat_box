@@ -28,6 +28,9 @@ int main() {
     init_button(BUTTON_PIN_RIGHT);
     init_adc_dma();
 
+    led_matrix_init();
+    ui_init();
+
     pwm_audio_init();
     setup_lcd();
 
@@ -49,6 +52,9 @@ int main() {
 
     for (;;) {
         uint32_t current_time = to_ms_since_boot(get_absolute_time());
+
+        led_matrix_refresh();
+        ui_update();
 
         // Update potentiometer values - returns true if params changed
         bool params_updated = update_pots(&adc_buffer);
