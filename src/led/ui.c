@@ -12,7 +12,7 @@
 #define LONG_PRESS_US 400000             // 400 ms for long-press
 
 // Global UI vertical offset (moves everything down)
-#define UI_Y_OFFSET 5
+#define UI_Y_OFFSET 0
 
 // button control vars
 #define PIN_SELECT 31

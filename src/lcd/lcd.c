@@ -1012,8 +1012,8 @@ void LCD_DrawPicture(u16 x0, u16 y0, const Picture* pic) {
     lcddev.select(0);
 }
 
-void LCD_PrintWaveMenu(int id, int freq, int amp, int decay, int dc_offset, int pitch_decay, int noise_mix, int env_curve, int comp_amount, int select)
-{
+void LCD_PrintWaveMenu(int id, int freq, int amp, int decay, int dc_offset, int pitch_decay,
+                       int noise_mix, int env_curve, int comp_amount, int select) {
     LCD_DrawFillRectangle(170, 9, 235, 235, COLOR_WHITE);
 
     // characteristics string
@@ -1022,61 +1022,52 @@ void LCD_PrintWaveMenu(int id, int freq, int amp, int decay, int dc_offset, int 
 
     printf("index: %d \n", select);
 
-    if (select == 0 || select == 4)
-    {
-        LCD_DrawRectangle( 195, 57, 210, 110, COLOR_BLACK);
+    if (select == 0 || select == 4) {
+        LCD_DrawRectangle(195, 57, 210, 110, COLOR_BLACK);
     }
-    if (select == 1 )
-    {
-        LCD_DrawRectangle( 195, 165, 210, 220, COLOR_BLACK);
+    if (select == 1) {
+        LCD_DrawRectangle(195, 165, 210, 220, COLOR_BLACK);
     }
-    if ( select == 5)
-    {
-        LCD_DrawRectangle( 195, 180, 210, 230, COLOR_BLACK);
+    if (select == 5) {
+        LCD_DrawRectangle(195, 180, 210, 230, COLOR_BLACK);
     }
-    if(select == 2 || select == 6)
-    {
-        LCD_DrawRectangle( 175, 50, 190, 110, COLOR_BLACK);
+    if (select == 2 || select == 6) {
+        LCD_DrawRectangle(175, 50, 190, 110, COLOR_BLACK);
     }
-    if (select == 3 || select == 7)
-    {
-        LCD_DrawRectangle( 175, 165, 190, 220, COLOR_BLACK);
+    if (select == 3 || select == 7) {
+        LCD_DrawRectangle(175, 165, 190, 220, COLOR_BLACK);
     }
 
-    if (select <=3)
-    {
+    if (select <= 3) {
         sprintf(settings_str, "Freq: %-6d | Amp: %-6d", freq, amp);
         sprintf(settings_str_2, "Dec: %-7d | Off: %-6d", decay, dc_offset);
         LCD_DrawString(195, 11, COLOR_BLACK, COLOR_BLACK, settings_str, 16, 1, 1);
         LCD_DrawString(175, 11, COLOR_BLACK, COLOR_BLACK, settings_str_2, 16, 1, 1);
-    }
-    else
-    {
+    } else {
         sprintf(settings_str, "Pitch: %-5d | Noise: %d", freq, noise_mix);
         sprintf(settings_str_2, "Env: %-7d | Comp: %d", env_curve, comp_amount);
         LCD_DrawString(195, 11, COLOR_BLACK, COLOR_BLACK, settings_str, 16, 1, 1);
         LCD_DrawString(175, 11, COLOR_BLACK, COLOR_BLACK, settings_str_2, 16, 1, 1);
     }
 
-
     char type[20];
 
     switch (id) {
-        case 0:
-            strcpy(type, "sine");
-            break;
-        case 1:
-            strcpy(type, "square");
-            break;
-        case 2:
-            strcpy(type, "triangle");
-            break;
-        case 3:
-            strcpy(type, "saw");
-            break;
-        case 4:
-            strcpy(type, "noise");
-            break;
+    case 0:
+        strcpy(type, "sine");
+        break;
+    case 1:
+        strcpy(type, "square");
+        break;
+    case 2:
+        strcpy(type, "triangle");
+        break;
+    case 3:
+        strcpy(type, "saw");
+        break;
+    case 4:
+        strcpy(type, "noise");
+        break;
     }
 
     char id_str[40];
@@ -1088,10 +1079,10 @@ void LCD_PlotWaveform(uint16_t* samples, int sample_count) {
 
     int width = WIDTH - 11;   // screen width
     int height = HEIGHT - 70; // screen height , leave room for text at top
-    int cut_len = 8000;
+    int cut_len = /*800*/ 0;
     int buffer_count = sample_count - cut_len;
 
-    // Clear screen 
+    // Clear screen
     LCD_DrawFillRectangle(0, 11, height, width, COLOR_BLACK);
 
     float buffer[(int) (sample_count - cut_len)];
@@ -1110,7 +1101,8 @@ void LCD_PlotWaveform(uint16_t* samples, int sample_count) {
             int idx = x * new_res + i;
             if (idx >= buffer_count)
                 break;
-            float val = (buffer[idx] / 127.5f) - 1.0f;
+            // float val = (buffer[idx] / 127.5f) - 1.0f;
+            float val = buffer[idx];
             sum += buffer[idx];
         }
         float avg = sum / new_res;
