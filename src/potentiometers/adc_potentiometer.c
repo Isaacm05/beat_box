@@ -11,11 +11,14 @@ volatile int idx = 0;
 volatile bool menu_updated = false;
 volatile bool update_lcd_params = 0;
 bool pot_engaged[PARAM_NUM] = {false}; // Explicitly initialize all to false
-WaveParams* current_params;
+WaveParams* current_params = NULL;
 
 // this is for when we have sets of params
 void set_current_params(WaveParams* params) {
     current_params = params;
+    for(int i = 0; i < PARAM_NUM; i++) {
+        pot_engaged[i] = false; // Reset engagement status for all parameters
+    }
 }
 
 void button_isr_left() {

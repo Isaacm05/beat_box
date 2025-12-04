@@ -43,19 +43,25 @@ void on_preset_selected(int track, int preset) {
     // If this is the active track, update adc_buffer and LCD immediately
     int active_track = ui_get_active_track();
     if (track == active_track) {
-        adc_buffer = track_params[track];
+        //adc_buffer = track_params[track];
 
-        // Regenerate waveforms
-        waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
-        waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer);
+        set_current_params(&track_params[track]); // point ADC to this track's params
+        
+        if (current_params)
+        {
+            // Regenerate waveforms
+            waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
+            waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer);
 
-        // Update LCD display
-        LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
-        LCD_PrintWaveMenu(adc_buffer.waveform_id, (int) adc_buffer.frequency,
+            // Update LCD display
+            LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
+            LCD_PrintWaveMenu(adc_buffer.waveform_id, (int) adc_buffer.frequency,
                           (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
                           (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
                           (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
                           (int) (adc_buffer.comp_amount * 100), idx);
+
+        }
     }
 
     printf("Loaded preset %d into track %d\n", preset_index, track);
@@ -105,16 +111,27 @@ int main() {
         // Get current active track
         int active_track = ui_get_active_track();
 
-        // When active track changes, load that track's params into adc_buffer (if it has a preset)
+        // When active track changes, load that track's params into active track's WaveParams (if it has a preset)
         if (active_track != prev_active_track) {
 
             if (track_has_preset[active_track]) {
                 // Load this track's stored params
-                adc_buffer = track_params[active_track];
+                
+                // calling set_current_params for active track's WaveForms
+                set_current_params(&track_params[active_track]); // point ADC to this track's params
+                //adc_buffer = track_params[active_track];
+             
                 printf("New track params: freq=%.2f, amp=%.2f, decay=%.2f\n", adc_buffer.frequency,
                        adc_buffer.amplitude, adc_buffer.decay);
                 // Regenerate waveforms
                 waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer);
+
+                if (current_params)
+                {
+                    printf("New track params: freq=%.2f, amp=%.2f, decay=%.2f\n", current_params->frequency,
+                           current_params->amplitude, current_params->decay);
+                    waveform_generate(lcd_buf, MAX_SAMPLES, current_params);
+                }
 
                 // Update LCD display
                 LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
@@ -124,6 +141,15 @@ int main() {
                     (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
                     (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
                     (int) (adc_buffer.comp_amount * 100), idx);
+                if (current_params)
+                {
+                    LCD_PrintWaveMenu(
+                        current_params->waveform_id, (int) current_params->frequency,
+                        (int) (current_params->amplitude * 100), (int) (current_params->decay * 100),
+                        (int) (current_params->offset_dc * 100), (int) (current_params->pitch_decay * 100),
+                        (int) (current_params->noise_mix * 100), (int) (current_params->env_curve * 100),
+                        (int) (current_params->comp_amount * 100), idx);
+                }
 
                 printf("Switched to track %d\n", active_track);
             } else {
@@ -142,6 +168,11 @@ int main() {
             params_updated = update_pots(&adc_buffer);
             track_params[active_track] = adc_buffer;
 
+            if(current_params)
+            {
+                params_updated = update_pots(current_params);
+            }
+
         } else {
             ignore_pot_updates = false; // Clear the flag after skipping one update
         }
@@ -159,6 +190,8 @@ int main() {
         if (params_updated || menu_updated) {
             // Regenerate waveform with new parameters
             waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer); // Generate float version for
+            
+            if (current_params) waveform_generate(lcd_buf, MAX_SAMPLES, current_params);
 
             LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
             LCD_PrintWaveMenu(
@@ -167,7 +200,15 @@ int main() {
                 (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
                 (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
                 (int) (adc_buffer.comp_amount * 100), idx);
-
+            if (current_params)
+            {
+                LCD_PrintWaveMenu(
+                    current_params->waveform_id, (int) current_params->frequency,
+                    (int) (current_params->amplitude * 100), (int) (current_params->decay * 100),
+                    (int) (current_params->offset_dc * 100), (int) (current_params->pitch_decay * 100),
+                    (int) (current_params->noise_mix * 100), (int) (current_params->env_curve * 100),
+                    (int) (current_params->comp_amount * 100), idx);
+            }
             params_changed = true;
             menu_updated = false;
             last_edit_time = current_time;
