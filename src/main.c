@@ -92,21 +92,17 @@ int main() {
     pwm_audio_init();
     setup_lcd();
 
-    adc_buffer = drum_presets[2];
+    adc_buffer = drum_presets[0];
 
     // Set the global pointer to our params (this is for later when we have 8 params)
     set_current_params(&adc_buffer);
 
     // Generate and display initial waveform
-    waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
-    waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer);
-
-    LCD_PrintWaveMenu(adc_buffer.waveform_id, (int) adc_buffer.frequency,
-                      (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
-                      (int) (adc_buffer.offset_dc * 100), (int) (adc_buffer.pitch_decay * 100),
-                      (int) (adc_buffer.noise_mix * 100), (int) (adc_buffer.env_curve * 100),
-                      (int) (adc_buffer.comp_amount * 100), idx);
-    LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
+    LCD_PrintWaveMenu(0, (int) (0),
+                      (int) (0), (int) (0),
+                      (int) (0), (int) (0),
+                      (int) (0), (int) (0),
+                      (int) (0), 0);
 
     for (;;) {
         uint32_t current_time = to_ms_since_boot(get_absolute_time());
@@ -127,13 +123,13 @@ int main() {
         if (params_updated || menu_updated) {
             // Regenerate waveform with new parameters
             waveform_generate_pwm(pwm_buf, MAX_SAMPLES, &adc_buffer);
-            waveform_generate(lcd_buf, MAX_SAMPLES, &adc_buffer); // Generate float version for
+            waveform_generate(pwm_buf, MAX_SAMPLES, &adc_buffer); // Generate float version for
 
             // Redraw LCD display
 
             // LCD_DrawFillRectangle(11, 60, 319, 239, BLACK);
 
-            LCD_PlotWaveform(lcd_buf, MAX_SAMPLES);
+            LCD_PlotWaveform(pwm_buf, MAX_SAMPLES);
             LCD_PrintWaveMenu(
                 adc_buffer.waveform_id, (int) adc_buffer.frequency,
                 (int) (adc_buffer.amplitude * 100), (int) (adc_buffer.decay * 100),
